@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ScanRouteImport } from './routes/scan'
 import { Route as CodesRouteImport } from './routes/codes'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CodesIndexRouteImport } from './routes/codes.index'
 import { Route as CodesCodeRouteImport } from './routes/codes.$code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
+const ScanRoute = ScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CodesRoute = CodesRouteImport.update({
   id: '/codes',
   path: '/codes',
@@ -44,12 +50,14 @@ const ApiChatRoute = ApiChatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/codes': typeof CodesRouteWithChildren
+  '/scan': typeof ScanRoute
   '/api/chat': typeof ApiChatRoute
   '/codes/$code': typeof CodesCodeRoute
   '/codes/': typeof CodesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/scan': typeof ScanRoute
   '/api/chat': typeof ApiChatRoute
   '/codes/$code': typeof CodesCodeRoute
   '/codes': typeof CodesIndexRoute
@@ -58,26 +66,42 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/codes': typeof CodesRouteWithChildren
+  '/scan': typeof ScanRoute
   '/api/chat': typeof ApiChatRoute
   '/codes/$code': typeof CodesCodeRoute
   '/codes/': typeof CodesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/codes' | '/api/chat' | '/codes/$code' | '/codes/'
+  fullPaths: '/' | '/codes' | '/scan' | '/api/chat' | '/codes/$code' | '/codes/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/chat' | '/codes/$code' | '/codes'
-  id: '__root__' | '/' | '/codes' | '/api/chat' | '/codes/$code' | '/codes/'
+  to: '/' | '/scan' | '/api/chat' | '/codes/$code' | '/codes'
+  id:
+    | '__root__'
+    | '/'
+    | '/codes'
+    | '/scan'
+    | '/api/chat'
+    | '/codes/$code'
+    | '/codes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CodesRoute: typeof CodesRouteWithChildren
+  ScanRoute: typeof ScanRoute
   ApiChatRoute: typeof ApiChatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/scan': {
+      id: '/scan'
+      path: '/scan'
+      fullPath: '/scan'
+      preLoaderRoute: typeof ScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/codes': {
       id: '/codes'
       path: '/codes'
@@ -131,6 +155,7 @@ const CodesRouteWithChildren = CodesRoute._addFileChildren(CodesRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CodesRoute: CodesRouteWithChildren,
+  ScanRoute: ScanRoute,
   ApiChatRoute: ApiChatRoute,
 }
 export const routeTree = rootRouteImport
