@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Bot, Car, Gauge, Home, ScanLine, SlidersHorizontal, Wrench, Languages, Bluetooth, BluetoothConnected } from "lucide-react";
+import { Bot, Car, Gauge, Home, Radar, ScanLine, SlidersHorizontal, Wrench, Languages, Bluetooth, BluetoothConnected } from "lucide-react";
 import { useI18n, type TKey } from "@/lib/i18n";
 import { useObd } from "@/lib/obd-context";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ const NAV: Array<{ to: string; key: TKey; icon: typeof Home }> = [
   { to: "/scan", key: "nav_scan", icon: ScanLine },
   { to: "/codes", key: "nav_codes", icon: Wrench },
   { to: "/live", key: "nav_live", icon: Gauge },
+  { to: "/sensors", key: "nav_sensors", icon: Radar },
   { to: "/controls", key: "nav_controls", icon: SlidersHorizontal },
   { to: "/garage", key: "nav_garage", icon: Car },
   { to: "/assistant", key: "nav_assistant", icon: Bot },
@@ -73,7 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 md:pb-16">{children}</main>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
-        <div className="grid grid-cols-7">
+        <div className="grid grid-cols-8">
           {NAV.map(({ to, key, icon: Icon }) => (
             <Link
               key={to}

@@ -15,6 +15,7 @@ const dict = {
   nav_garage: { ar: "المرآب", en: "Garage" },
   nav_assistant: { ar: "المساعد الذكي", en: "AI Assistant" },
   nav_controls: { ar: "الفحوصات والتحكم", en: "Tests & Control" },
+  nav_sensors: { ar: "الحساسات", en: "Sensors" },
   lang_switch: { ar: "English", en: "عربي" },
 
   home_title: { ar: "لوحة التحكم", en: "Dashboard" },
@@ -133,6 +134,28 @@ const dict = {
   expected_val: { ar: "المتوقع", en: "Expected" },
   diag_waiting: { ar: "ابدأ القراءة لعرض التشخيص التلقائي", en: "Start streaming to see the automatic diagnosis" },
   all_good: { ar: "كل القراءات ضمن المعدل الطبيعي", en: "All readings are within normal range" },
+
+  sensors_title: { ar: "مستكشف الحساسات والوحدات", en: "Sensor & module explorer" },
+  sensors_d: {
+    ar: "يكتشف التطبيق تلقائياً كل الحساسات التي تدعمها سيارتك ويقرأ قيمها بالوحدات الصحيحة، ويفحص وحدات التحكم الموجودة على شبكة السيارة.",
+    en: "Auto-discovers every sensor your ECU supports, reads each value in real units, and probes the control modules present on the vehicle bus.",
+  },
+  discover_sensors: { ar: "اكتشاف الحساسات المدعومة", en: "Discover supported sensors" },
+  read_all_values: { ar: "قراءة كل القيم", en: "Read all values" },
+  scan_modules: { ar: "فحص وحدات التحكم", en: "Scan control modules" },
+  sensors_found: { ar: "حساس مدعوم", en: "supported sensors" },
+  search_sensors: { ar: "ابحث عن حساس أو PID…", en: "Search a sensor or PID…" },
+  all_groups: { ar: "كل المجموعات", en: "All groups" },
+  showing_supported: { ar: "الحساسات المدعومة في سيارتك", en: "Sensors supported by your vehicle" },
+  showing_all: { ar: "كل الحساسات القياسية", en: "All standard sensors" },
+  modules_on_bus: { ar: "وحدات التحكم على الشبكة", en: "Modules on the bus" },
+  modules_d: {
+    ar: "يرسل التطبيق طلب تعريف لكل عنوان وحدة معروف ويعرض الوحدات التي ردّت — تماماً كما تفعل برامج التشخيص المتقدمة.",
+    en: "Sends an identification request to each known module address and lists the ones that answered — the way advanced diagnostic tools do.",
+  },
+  modules_empty: { ar: "شغّل فحص وحدات التحكم لعرض الوحدات المتصلة", en: "Run the module scan to list connected modules" },
+  module_online: { ar: "متصلة", en: "Online" },
+  module_offline: { ar: "لا ترد", en: "No reply" },
 } as const;
 
 export type TKey = keyof typeof dict;
