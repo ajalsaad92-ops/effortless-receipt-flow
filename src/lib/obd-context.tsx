@@ -24,6 +24,21 @@ export function ObdProvider({ children }: { children: React.ReactNode }) {
   const [deviceName, setDeviceName] = useState<string | null>(null);
   const [transport, setTransport] = useState<ObdTransport | null>(null);
 
+  // The adapter can vanish without us asking (out of range, unplugged, ignition
+  // off). Reflect that immediately instead of leaving the header on "connected"
+  // while every command quietly times out.
+  useEffect(() => {
+    const connection = connectionRef.current;
+    connection.onDrop = () => {
+      setStatus("idle");
+      setDeviceName(null);
+      setTransport(null);
+    };
+    return () => {
+      connection.onDrop = null;
+    };
+  }, []);
+
   const connect = useCallback(async (kind: ObdTransport = "ble", baudRate = 38400) => {
     setStatus("connecting");
     try {

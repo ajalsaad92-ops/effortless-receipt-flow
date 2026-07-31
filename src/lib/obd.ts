@@ -11,6 +11,11 @@ const UART_TX = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 const UART_RX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 const FALLBACK_SERVICES = [UART_SERVICE, "0000fff0-0000-1000-8000-00805f9b34fb", "0000ffe0-0000-1000-8000-00805f9b34fb"];
 
+/** Line is considered flushed once this long passes with no bytes arriving. */
+const DRAIN_QUIET_MS = 150;
+/** Never spend longer than this flushing, however chatty the adapter is. */
+const DRAIN_MAX_MS = 800;
+
 export type ObdStatus = "idle" | "connecting" | "connected";
 export type ObdTransport = "ble" | "serial";
 
@@ -26,6 +31,38 @@ type AnyBt = {
   requestDevice: (o: unknown) => Promise<any>;
 };
 
+/**
+ * True when `chunk` could plausibly be the answer to `command`.
+ *
+ * A positive OBD reply echoes the mode with bit 6 set (01 -> 41, 03 -> 43 ...)
+ * and, for modes 01/02/09, the requested PID as well. Checking that envelope is
+ * what lets a late reply from a command that already timed out be recognised
+ * and dropped, instead of being returned as though it answered the command
+ * running now — which is how a coolant read could come back holding RPM data.
+ */
+export function replyMatches(command: string, chunk: string): boolean {
+  const cmd = command.trim().toUpperCase();
+  if (!/^[0-9A-F]{2,}$/.test(cmd)) return true; // AT... and anything non-hex
+  const upper = chunk.toUpperCase();
+  // Adapter and ECU status replies are legitimate answers to any command.
+  if (/NO DATA|ERROR|UNABLE|STOPPED|SEARCHING|BUS |^\s*\?|7F/.test(upper)) return true;
+
+  const mode = parseInt(cmd.slice(0, 2), 16);
+  if (Number.isNaN(mode)) return true;
+  let expected = (mode + 0x40).toString(16).toUpperCase().padStart(2, "0");
+  // Modes 01, 02 and 09 echo the PID back, which is the only thing that
+  // distinguishes one Mode 01 reply from another.
+  if ((mode === 0x01 || mode === 0x02 || mode === 0x09) && cmd.length >= 4) {
+    expected += cmd.slice(2, 4);
+  }
+
+  return upper.split(/[\r\n]+/).some((line) => {
+    const body = line.includes(":") ? line.slice(line.indexOf(":") + 1) : line;
+    const hex = body.replace(/[^0-9A-F]/g, "");
+    return hex.startsWith(expected);
+  });
+}
+
 export class ObdConnection {
   private device: any = null;
   private writer: any = null;
@@ -38,14 +75,63 @@ export class ObdConnection {
   private resolvers: Array<(v: string) => void> = [];
   /** ELM327 handles exactly one command at a time — every send is queued. */
   private chain: Promise<unknown> = Promise.resolve();
+  /**
+   * Monotonic request id. A command that already timed out must never be able
+   * to touch the state of the command that replaced it, so both the timeout
+   * timer and any late-arriving bytes are checked against the current ticket.
+   */
+  private seq = 0;
+  /**
+   * Set when a command times out. The adapter may still push the reply it owed
+   * us — a slow ECU or a protocol search rather than a lost frame — and that
+   * orphan used to be handed to whichever command ran next, so a coolant read
+   * could come back holding RPM data. We flush the line before the next write
+   * instead of guessing which frame is stale.
+   */
+  private needsDrain = false;
+  /** Counts inbound chunks; only used to detect when the line has gone quiet. */
+  private rxCount = 0;
+  /** The command currently awaiting a reply, so orphans can be recognised. */
+  private awaiting: string | null = null;
 
   private pushChunk(text: string) {
+    this.rxCount += 1;
+    // Nothing is in flight, so these bytes belong to a command that already
+    // gave up. Never let them satisfy a future one.
+    if (this.resolvers.length === 0) {
+      this.buffer = "";
+      return;
+    }
     this.buffer += text;
     if (this.buffer.includes(">")) {
       const chunk = this.buffer.replace(/>/g, "").trim();
       this.buffer = "";
+      // Wrong envelope: this belongs to a command we already gave up on. Drop
+      // it and keep waiting rather than answering with another PID's data.
+      if (this.awaiting && !replyMatches(this.awaiting, chunk)) return;
       const resolve = this.resolvers.shift();
       resolve?.(chunk);
+    }
+  }
+
+  /**
+   * Discard whatever the adapter is still sending until the line goes quiet.
+   * No resolver is registered while this runs, so a valid reply can never be
+   * thrown away — which is what stops a timeout from cascading into every
+   * command after it.
+   */
+  private async drain() {
+    this.needsDrain = false;
+    this.resolvers = [];
+    this.awaiting = null;
+    this.buffer = "";
+    const started = Date.now();
+    let lastActivity = Date.now();
+    while (Date.now() - started < DRAIN_MAX_MS) {
+      const before = this.rxCount;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      if (this.rxCount !== before) lastActivity = Date.now();
+      else if (Date.now() - lastActivity >= DRAIN_QUIET_MS) return;
     }
   }
 
@@ -77,6 +163,7 @@ export class ObdConnection {
       } catch {
         /* port closed */
       }
+      this.handleDrop();
     })();
 
     await this.initAdapter();
@@ -120,6 +207,7 @@ export class ObdConnection {
     this.writer = write;
     this.transport = "ble";
     this.open = true;
+    device.addEventListener?.("gattserverdisconnected", () => this.handleDrop());
 
     await this.initAdapter();
     return device.name ?? "OBD adapter";
@@ -161,6 +249,11 @@ export class ObdConnection {
         this.device?.gatt?.disconnect();
       }
     } finally {
+      // Invalidate every in-flight ticket so a reply that lands after teardown
+      // cannot resolve a command from the previous session.
+      this.seq += 1;
+      this.needsDrain = false;
+      this.awaiting = null;
       this.device = null;
       this.writer = null;
       this.port = null;
@@ -169,6 +262,26 @@ export class ObdConnection {
       this.buffer = "";
       this.resolvers = [];
     }
+  }
+
+  /**
+   * Called when the adapter goes away on its own (out of BLE range, unplugged,
+   * car switched off) rather than through {@link disconnect}. Without this the
+   * UI kept showing "connected" while every command silently timed out.
+   */
+  onDrop: (() => void) | null = null;
+
+  private handleDrop() {
+    if (!this.open) return;
+    this.open = false;
+    this.seq += 1;
+    this.needsDrain = false;
+    this.awaiting = null;
+    this.buffer = "";
+    this.resolvers = [];
+    this.writer = null;
+    this.serialWriter = null;
+    this.onDrop?.();
   }
 
   /** Queued so two commands never overlap on the wire. */
@@ -183,23 +296,35 @@ export class ObdConnection {
 
   private async sendNow(command: string, timeoutMs: number): Promise<string> {
     if (!this.writer && !this.serialWriter) throw new Error("not-connected");
+    if (this.needsDrain) await this.drain();
+    const ticket = ++this.seq;
     this.buffer = "";
     this.resolvers = [];
-    const payload = new TextEncoder().encode(`${command}\r`);
-    let resolver: ((v: string) => void) | null = null;
+    this.awaiting = command;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const answer = new Promise<string>((resolve, reject) => {
-      resolver = resolve;
       this.resolvers.push(resolve);
-      setTimeout(() => {
-        this.resolvers = this.resolvers.filter((r) => r !== resolver);
+      timer = setTimeout(() => {
+        // A timer that outlived its own command must not clear the buffer of
+        // whichever command is running now — that used to truncate multi-frame
+        // replies (VIN, mode 09 text, multi-DTC mode 03).
+        if (ticket !== this.seq) return;
+        this.resolvers = [];
+        this.awaiting = null;
         this.buffer = "";
+        this.needsDrain = true;
         reject(new Error("timeout"));
       }, timeoutMs);
     });
-    if (this.serialWriter) await this.serialWriter.write(payload);
-    else if (this.writer.writeValueWithoutResponse) await this.writer.writeValueWithoutResponse(payload);
-    else await this.writer.writeValue(payload);
-    return answer;
+    const payload = new TextEncoder().encode(`${command}\r`);
+    try {
+      if (this.serialWriter) await this.serialWriter.write(payload);
+      else if (this.writer.writeValueWithoutResponse) await this.writer.writeValueWithoutResponse(payload);
+      else await this.writer.writeValue(payload);
+      return await answer;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   async readTroubleCodes(): Promise<string[]> {
@@ -307,6 +432,7 @@ export class ObdConnection {
         } catch {
           /* closed */
         }
+        this.handleDrop();
       })();
       await this.initAdapter();
       return "ELM327 (Serial)";
@@ -342,6 +468,7 @@ export class ObdConnection {
         this.writer = write;
         this.transport = "ble";
         this.open = true;
+        device.addEventListener?.("gattserverdisconnected", () => this.handleDrop());
         await this.initAdapter();
         return device.name ?? "OBD adapter";
       } catch {
@@ -529,14 +656,30 @@ export function parseDtcResponse(raw: string): string[] {
   return Array.from(new Set(codes));
 }
 
+/**
+ * `null` means "not read from this car yet" — it is deliberately distinct from
+ * a real 0. Diagnostic rules skip null fields instead of judging them, so the
+ * app can never report a verdict (e.g. "charging system healthy") based on a
+ * value the ECU never actually returned.
+ */
 export type LiveReading = {
-  rpm: number;
-  speed: number;
-  coolant: number;
-  load: number;
-  intake: number;
-  throttle: number;
-  voltage: number;
+  rpm: number | null;
+  speed: number | null;
+  coolant: number | null;
+  load: number | null;
+  intake: number | null;
+  throttle: number | null;
+  voltage: number | null;
+};
+
+export const EMPTY_READING: LiveReading = {
+  rpm: null,
+  speed: null,
+  coolant: null,
+  load: null,
+  intake: null,
+  throttle: null,
+  voltage: null,
 };
 
 export const LIVE_PIDS = {
