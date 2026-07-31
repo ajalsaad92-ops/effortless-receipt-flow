@@ -203,8 +203,17 @@ export class ObdConnection {
   }
 
   async readTroubleCodes(): Promise<string[]> {
-    const raw = await this.send("03");
-    return parseDtcResponse(raw);
+    const codes = new Set<string>();
+    // 03 = stored, 07 = pending, 0A = permanent — many cars only answer one of them.
+    for (const mode of ["03", "07", "0A"]) {
+      try {
+        const raw = await this.send(mode, 7000);
+        for (const code of parseDtcResponse(raw)) codes.add(code);
+      } catch {
+        /* mode unsupported on this ECU */
+      }
+    }
+    return Array.from(codes);
   }
 
   async clearTroubleCodes() {
