@@ -39,6 +39,18 @@ const dict = {
     ar: "متصفحك لا يدعم البلوتوث. استخدم Chrome على أندرويد أو الكمبيوتر، أو أدخل الأكواد يدوياً.",
     en: "Your browser does not support Web Bluetooth. Use Chrome on Android/desktop, or enter codes manually.",
   },
+  connect_ble: { ar: "اتصال بلوتوث BLE", en: "Connect via BLE" },
+  connect_serial: { ar: "اتصال عبر منفذ COM / SPP", en: "Connect via COM / SPP port" },
+  serial_unsupported: {
+    ar: "متصفحك لا يدعم Web Serial. استخدم Chrome أو Edge على الكمبيوتر.",
+    en: "Your browser does not support Web Serial. Use Chrome or Edge on desktop.",
+  },
+  laptop_help_title: { ar: "لا يظهر جهاز ELM327 في القائمة؟", en: "ELM327 not showing up?" },
+  laptop_help_body: {
+    ar: "أغلب أجهزة ELM327 تعمل ببلوتوث كلاسيكي (SPP) وليس BLE، ومتصفح الكمبيوتر لا يستطيع رؤيتها كأجهزة بلوتوث. الحل على اللابتوب: اقرن الجهاز من إعدادات ويندوز (كلمة المرور 1234 أو 6789)، ثم افتح «إعدادات البلوتوث ← منافذ COM» وستجد منفذ Outgoing باسم الجهاز. بعدها اضغط «اتصال عبر منفذ COM» هنا واختر ذلك المنفذ. إذا كان جهازك BLE (مثل Vgate iCar Pro BLE) استخدم «اتصال بلوتوث BLE» بدلاً من ذلك.",
+    en: "Most ELM327 adapters use classic Bluetooth (SPP), not BLE, so a desktop browser cannot see them in the Bluetooth picker. On a laptop: pair the adapter in Windows settings (PIN 1234 or 6789), open Bluetooth settings → COM ports and note the Outgoing port, then press “Connect via COM / SPP port” here and pick that port. If your adapter is BLE (e.g. Vgate iCar Pro BLE) use “Connect via BLE” instead.",
+  },
+  baud_rate: { ar: "سرعة المنفذ (Baud)", en: "Baud rate" },
   read_codes: { ar: "قراءة الأكواد", en: "Read codes" },
   clear_codes: { ar: "مسح الأكواد", en: "Clear codes" },
   manual_entry: { ar: "إدخال يدوي", en: "Manual entry" },

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bluetooth, Eraser, Keyboard, Loader2, RefreshCw, Save } from "lucide-react";
+import { Bluetooth, Eraser, Info, Keyboard, Loader2, RefreshCw, Save, Usb } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/scan")({
 
 function ScanPage() {
   const { t, lang } = useI18n();
-  const { status, supported, connect, disconnect, connection, deviceName } = useObd();
+  const { status, supported, serialSupported, transport, connect, disconnect, connection, deviceName } = useObd();
   const { addScan } = useScans();
   const { vehicles } = useVehicles();
 
@@ -38,14 +38,23 @@ function ScanPage() {
   const [manual, setManual] = useState("");
   const [vehicleId, setVehicleId] = useState<string>("");
   const [confirmClear, setConfirmClear] = useState(false);
+  const [baud, setBaud] = useState(38400);
+  const [showHelp, setShowHelp] = useState(false);
 
-  const handleConnect = async () => {
+  const handleConnect = async (kind: "ble" | "serial") => {
     try {
-      await connect();
+      await connect(kind, baud);
       toast.success(t("connected"));
     } catch (error) {
       const message = (error as Error).message;
-      toast.error(message === "bluetooth-unsupported" ? t("bt_unsupported") : message);
+      toast.error(
+        message === "bluetooth-unsupported"
+          ? t("bt_unsupported")
+          : message === "serial-unsupported"
+            ? t("serial_unsupported")
+            : message,
+      );
+      setShowHelp(true);
     }
   };
 
@@ -106,14 +115,16 @@ function ScanPage() {
             {t("bluetooth")}
           </div>
 
-          {!supported ? (
+          {!supported && !serialSupported ? (
             <p className="mt-3 rounded-2xl bg-warning/15 p-3 text-xs leading-relaxed text-warning-foreground">
               {t("bt_unsupported")}
             </p>
           ) : null}
 
           <p className="mt-3 text-xs text-muted-foreground">
-            {status === "connected" ? `${t("connected")} · ${deviceName}` : t("disconnected")}
+            {status === "connected"
+              ? `${t("connected")} · ${deviceName} · ${transport === "serial" ? "SPP/COM" : "BLE"}`
+              : t("disconnected")}
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -143,16 +154,53 @@ function ScanPage() {
                 </button>
               </>
             ) : (
-              <button
-                onClick={handleConnect}
-                disabled={status === "connecting"}
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-60"
-              >
-                {status === "connecting" ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />}
-                {status === "connecting" ? t("connecting") : t("connect")}
-              </button>
+              <>
+                <button
+                  onClick={() => handleConnect("ble")}
+                  disabled={status === "connecting"}
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-60"
+                >
+                  {status === "connecting" ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />}
+                  {status === "connecting" ? t("connecting") : t("connect_ble")}
+                </button>
+                <button
+                  onClick={() => handleConnect("serial")}
+                  disabled={status === "connecting"}
+                  className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm disabled:opacity-60"
+                >
+                  <Usb className="size-4" />
+                  {t("connect_serial")}
+                </button>
+                <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                  {t("baud_rate")}
+                  <select
+                    value={baud}
+                    onChange={(e) => setBaud(Number(e.target.value))}
+                    className="h-9 rounded-full border border-border bg-card px-3 text-xs"
+                  >
+                    {[9600, 38400, 115200, 500000].map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </>
             )}
           </div>
+
+          <button
+            onClick={() => setShowHelp((v) => !v)}
+            className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-primary"
+          >
+            <Info className="size-3.5" />
+            {t("laptop_help_title")}
+          </button>
+          {showHelp ? (
+            <p className="mt-2 rounded-2xl bg-secondary p-3 text-xs leading-relaxed text-muted-foreground">
+              {t("laptop_help_body")}
+            </p>
+          ) : null}
 
           {confirmClear ? (
             <div className="mt-4 rounded-2xl border border-warning/40 bg-warning/10 p-4">
