@@ -1,5 +1,19 @@
 import { Link } from "@tanstack/react-router";
-import { Bot, Car, Gauge, Home, Radar, ScanLine, SlidersHorizontal, Wrench, Languages, Bluetooth, BluetoothConnected } from "lucide-react";
+import {
+  Bot,
+  Car,
+  ClipboardList,
+  Gauge,
+  Home,
+  Map,
+  Radar,
+  ScanLine,
+  SlidersHorizontal,
+  Wrench,
+  Languages,
+  Bluetooth,
+  BluetoothConnected,
+} from "lucide-react";
 import { useI18n, type TKey } from "@/lib/i18n";
 import { useObd } from "@/lib/obd-context";
 import { cn } from "@/lib/utils";
@@ -7,10 +21,12 @@ import { cn } from "@/lib/utils";
 const NAV: Array<{ to: string; key: TKey; icon: typeof Home }> = [
   { to: "/", key: "nav_home", icon: Home },
   { to: "/scan", key: "nav_scan", icon: ScanLine },
+  { to: "/report", key: "nav_report", icon: ClipboardList },
   { to: "/codes", key: "nav_codes", icon: Wrench },
   { to: "/live", key: "nav_live", icon: Gauge },
   { to: "/sensors", key: "nav_sensors", icon: Radar },
   { to: "/controls", key: "nav_controls", icon: SlidersHorizontal },
+  { to: "/diagrams", key: "nav_diagrams", icon: Map },
   { to: "/garage", key: "nav_garage", icon: Car },
   { to: "/assistant", key: "nav_assistant", icon: Bot },
 ];
@@ -34,13 +50,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
 
-          <nav className="mx-auto hidden items-center gap-1 md:flex">
+          <nav className="mx-auto hidden items-center gap-0.5 md:flex">
             {NAV.map(({ to, key, icon: Icon }) => (
               <Link
                 key={to}
                 to={to}
                 activeOptions={{ exact: to === "/" }}
-                className="flex items-center gap-2 rounded-full px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                className="flex items-center gap-1.5 rounded-full px-2.5 py-2 text-[13px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 activeProps={{ className: "bg-secondary text-foreground font-medium" }}
               >
                 <Icon className="size-4" />
@@ -74,13 +90,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 md:pb-16">{children}</main>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/70 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
-        <div className="grid grid-cols-8">
+        <div className="flex snap-x overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {NAV.map(({ to, key, icon: Icon }) => (
             <Link
               key={to}
               to={to}
               activeOptions={{ exact: to === "/" }}
-              className="flex flex-col items-center gap-1 py-2.5 text-[10px] text-muted-foreground"
+              className="flex min-w-[4.5rem] shrink-0 snap-start flex-col items-center gap-1 py-2.5 text-[10px] text-muted-foreground"
               activeProps={{ className: "text-primary font-medium" }}
             >
               <Icon className="size-5" />
