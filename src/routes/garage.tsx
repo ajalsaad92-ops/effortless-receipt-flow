@@ -62,14 +62,14 @@ function GaragePage() {
 
       <button
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+        className="inline-flex items-center gap-2 rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground"
       >
         <Plus className="size-4" />
         {t("add_vehicle")}
       </button>
 
       {open ? (
-        <div className="mt-4 grid gap-3 rounded-3xl border border-border bg-card p-5 sm:grid-cols-2">
+        <div className="mt-4 grid gap-3 panel p-5 sm:grid-cols-2">
           <Field label={t("nickname")} value={form.nickname} onChange={(v) => setForm({ ...form, nickname: v })} />
           <Field label={t("model")} value={form.model} onChange={(v) => setForm({ ...form, model: v })} placeholder="Silverado 5.3L" />
           <Field label={t("year")} value={form.year} onChange={(v) => setForm({ ...form, year: v })} placeholder="2018" />
@@ -80,10 +80,10 @@ function GaragePage() {
             onChange={(v) => setForm({ ...form, odometer: Number(v) || 0 })}
           />
           <div className="flex items-end gap-2">
-            <button onClick={submit} className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground">
+            <button onClick={submit} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
               {t("save")}
             </button>
-            <button onClick={() => setOpen(false)} className="rounded-full px-4 py-2.5 text-sm text-muted-foreground">
+            <button onClick={() => setOpen(false)} className="rounded-lg px-3.5 py-2 text-sm text-muted-foreground">
               {t("cancel")}
             </button>
           </div>
@@ -91,16 +91,16 @@ function GaragePage() {
       ) : null}
 
       {vehicles.length === 0 ? (
-        <p className="mt-6 rounded-3xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+        <p className="mt-6 rounded-lg border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
           {t("no_vehicles")}
         </p>
       ) : (
         <div className="mt-6 space-y-4">
           {vehicles.map((vehicle) => (
-            <article key={vehicle.id} className="rounded-3xl border border-border bg-card p-5">
+            <article key={vehicle.id} className="panel p-5">
               <header className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="grid size-11 place-items-center rounded-2xl bg-secondary">
+                  <span className="grid size-11 place-items-center rounded-lg bg-secondary">
                     <Car className="size-5" />
                   </span>
                   <div>
@@ -117,12 +117,12 @@ function GaragePage() {
                       type="number"
                       value={vehicle.odometer}
                       onChange={(e) => updateVehicle(vehicle.id, { odometer: Number(e.target.value) || 0 })}
-                      className="h-9 w-28 rounded-xl border border-border bg-background px-3 text-sm tabular-nums text-foreground"
+                      className="h-9 w-28 rounded-lg border border-border bg-background px-3 text-sm tabular-nums text-foreground"
                     />
                   </label>
                   <button
                     onClick={() => removeVehicle(vehicle.id)}
-                    className="grid size-9 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    className="grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                     aria-label={t("delete")}
                   >
                     <Trash2 className="size-4" />
@@ -136,11 +136,11 @@ function GaragePage() {
                   const s = serviceStatus(vehicle, logs, item);
                   const pct = Math.min(100, Math.max(0, ((s.plan.intervalKm - s.remaining) / s.plan.intervalKm) * 100));
                   return (
-                    <li key={item} className="rounded-2xl border border-border/70 p-3.5">
+                    <li key={item} className="rounded-lg border border-border p-3.5">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-sm font-medium">{s.plan[lang]}</span>
                         <span
-                          className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                          className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${
                             s.due ? "bg-destructive/15 text-destructive" : "bg-success/15 text-success"
                           }`}
                         >
@@ -193,7 +193,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-11 rounded-2xl border border-border bg-background px-4 text-sm text-foreground outline-none focus:border-primary"
+        className="h-11 rounded-lg border border-border bg-background px-4 text-sm text-foreground outline-none focus:border-primary"
       />
     </label>
   );

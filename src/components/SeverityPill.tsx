@@ -2,13 +2,15 @@ import type { Severity } from "@/lib/dtc-data";
 import { useI18n } from "@/lib/i18n";
 
 const STYLES: Record<Severity, string> = {
-  low: "bg-success/15 text-success",
-  medium: "bg-warning/20 text-warning-foreground",
-  high: "bg-destructive/15 text-destructive",
+  low: "border-success/30 bg-success/10 text-success",
+  medium: "border-warning/30 bg-warning/10 text-warning",
+  high: "border-destructive/30 bg-destructive/10 text-destructive",
 };
 
 export function SeverityPill({ severity }: { severity: Severity }) {
   const { t } = useI18n();
   const label = severity === "low" ? t("sev_low") : severity === "medium" ? t("sev_medium") : t("sev_high");
-  return <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${STYLES[severity]}`}>{label}</span>;
+  return (
+    <span className={`shrink-0 rounded-md border px-2 py-0.5 text-[11px] font-medium ${STYLES[severity]}`}>{label}</span>
+  );
 }
