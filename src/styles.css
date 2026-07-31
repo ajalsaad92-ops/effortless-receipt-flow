@@ -2,20 +2,35 @@
 @source "../src";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/*
+  GM OBD — "workshop instrument"
+
+  A diagnostic tool is read in a dark garage, at arm's length, usually in a
+  hurry. So: one committed dark theme, very high contrast on the numbers, and
+  colour reserved almost entirely for state. Amber is the accent because amber
+  is the check-engine lamp — the one colour every driver already reads as
+  "the car is telling you something".
+*/
 
 @theme inline {
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
+  --font-sans: "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  /* Plex Mono carries no Arabic, so Arabic inside a mono run must fall back to
+     the Arabic face rather than to an arbitrary system monospace — otherwise
+     joined script gets monospace advances and comes out visibly gappy. */
+  --font-mono: "IBM Plex Mono", "IBM Plex Sans Arabic", ui-monospace, "SFMono-Regular", monospace;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.25rem;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-elevated: var(--elevated);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
@@ -29,264 +44,209 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
+  --color-hairline: var(--hairline);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
-  --color-paper: var(--paper);
-  --color-ink: var(--ink);
 }
 
 :root {
-  --radius: 1rem;
   --app-height: 100vh;
-  /* Warm tactile native palette */
-  --background: oklch(0.985 0.003 60);          /* warm off-white */
-  --foreground: oklch(0.18 0.02 270);           /* near-black */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 270);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 270);
-  --primary: oklch(0.58 0.16 155);              /* rich emerald */
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.97 0.005 60);
-  --secondary-foreground: oklch(0.18 0.02 270);
-  --muted: oklch(0.96 0.005 60);
-  --muted-foreground: oklch(0.5 0.02 270);
-  --accent: oklch(0.96 0.03 155);               /* emerald-tinted accent */
-  --accent-foreground: oklch(0.18 0.02 270);
-  --destructive: oklch(0.6 0.22 27);
-  --destructive-foreground: oklch(0.99 0 0);
-  --success: oklch(0.7 0.16 155);
-  --success-foreground: oklch(0.99 0 0);
-  --warning: oklch(0.78 0.14 75);
-  --warning-foreground: oklch(0.18 0.02 270);
-  --border: oklch(0.92 0.005 60);
-  --input: oklch(0.92 0.005 60);
-  --ring: oklch(0.58 0.16 155);
-  --paper: oklch(0.98 0.005 60);
-  --ink: oklch(0.15 0.02 270);
+
+  /* Instrument panel at night: near-black with a cold cast. */
+  --background: oklch(0.155 0.012 258);
+  --foreground: oklch(0.97 0.004 250);
+
+  --card: oklch(0.196 0.014 258);
+  --card-foreground: oklch(0.97 0.004 250);
+  --elevated: oklch(0.235 0.016 258);
+  --popover: oklch(0.21 0.015 258);
+  --popover-foreground: oklch(0.97 0.004 250);
+
+  /* Signal amber — the check-engine lamp. */
+  --primary: oklch(0.78 0.155 68);
+  --primary-foreground: oklch(0.18 0.03 60);
+
+  --secondary: oklch(0.26 0.016 258);
+  --secondary-foreground: oklch(0.97 0.004 250);
+  --muted: oklch(0.24 0.014 258);
+  --muted-foreground: oklch(0.7 0.014 256);
+  --accent: oklch(0.78 0.155 68 / 14%);
+  --accent-foreground: oklch(0.86 0.13 72);
+
+  /* Status: the automotive convention, and nothing else uses these. */
+  --success: oklch(0.76 0.16 158);
+  --success-foreground: oklch(0.16 0.02 258);
+  --warning: oklch(0.82 0.15 82);
+  --warning-foreground: oklch(0.16 0.02 258);
+  --destructive: oklch(0.68 0.19 22);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --border: oklch(1 0 0 / 9%);
+  --hairline: oklch(1 0 0 / 6%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.78 0.155 68);
 }
 
 @supports (height: 100lvh) {
-  :root {
-    --app-height: 100lvh;
-  }
-}
-
-.dark {
-  --background: oklch(0.14 0.015 270);
-  --foreground: oklch(1 0 0);
-  --card: oklch(1 0 0 / 6%);
-  --card-foreground: oklch(1 0 0);
-  --popover: oklch(0.18 0.02 270 / 92%);
-  --popover-foreground: oklch(1 0 0);
-  --primary: oklch(0.66 0.17 155);
-  --primary-foreground: oklch(0.15 0.02 270);
-  --secondary: oklch(1 0 0 / 8%);
-  --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(1 0 0 / 6%);
-  --muted-foreground: oklch(0.99 0.003 60);
-  --accent: oklch(0.66 0.17 155 / 16%);
-  --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.65 0.22 27);
-  --destructive-foreground: oklch(1 0 0);
-  --success: oklch(0.65 0.16 155);
-  --success-foreground: oklch(0.99 0 0);
-  --warning: oklch(0.75 0.14 75);
-  --warning-foreground: oklch(0.15 0.02 270);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.66 0.17 155);
-  --paper: oklch(1 0 0 / 6%);
-  --ink: oklch(1 0 0);
+  :root { --app-height: 100lvh; }
 }
 
 @layer base {
   * { border-color: var(--color-border); }
-  /* Fill the full viewport including iOS safe areas. In standalone PWA mode
-     the home-indicator zone is painted with the <html> background, so html
-     must extend to 100dvh or iOS shows a white bar at the bottom. */
+
   html, body {
-    background-color: #0b0a10;
-    color: var(--color-foreground);
+    background-color: var(--background);
+    color: var(--foreground);
     min-height: var(--app-height);
     height: 100%;
   }
+
   body {
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     min-height: var(--app-height);
     overscroll-behavior-y: none;
+    /* A technical-drawing grid plus a vignette, so the centre reads brighter
+       than the edges — the way a lit instrument cluster actually looks. */
+    background-image:
+      radial-gradient(120% 80% at 50% 0%, oklch(0.26 0.03 258 / 55%) 0%, transparent 60%),
+      linear-gradient(to right, oklch(1 0 0 / 3.5%) 1px, transparent 1px),
+      linear-gradient(to bottom, oklch(1 0 0 / 3.5%) 1px, transparent 1px);
+    background-size: 100% 100%, 56px 56px, 56px 56px;
+    background-attachment: fixed;
   }
-  /* Hide native number spin */
+
+  /* Every number here is a measurement: lock the digit widths so a changing
+     value never makes the layout twitch. */
+  .font-mono, code, kbd, samp, pre { font-variant-numeric: tabular-nums; }
+
   input[type=number]::-webkit-outer-spin-button,
   input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type=number] { -moz-appearance: textfield; }
+
+  ::selection { background: oklch(0.78 0.155 68 / 30%); }
+
+  html, body { scrollbar-width: none; -ms-overflow-style: none; }
+  html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar {
+    width: 0; height: 0; display: none;
+  }
 }
 
 @layer utilities {
-  .min-h-app {
-    min-height: var(--app-height);
-  }
-
-  .h-app {
-    height: var(--app-height);
-  }
+  .min-h-app { min-height: var(--app-height); }
+  .h-app { height: var(--app-height); }
 }
 
-/* Polaroid-ish receipt frame */
-.receipt-frame {
-  background: white;
-  padding: 0.5rem 0.5rem 1.75rem 0.5rem;
-  box-shadow: 0 22px 40px -24px rgba(0,0,0,0.35), 0 6px 14px -8px rgba(0,0,0,0.2);
+/* ── Instrument primitives ─────────────────────────────────────────────── */
+
+/* The micro-label above every readout.
+   Sans by default: labels are words, not measurements, and Plex Mono has no
+   Arabic — setting Arabic in a mono run makes the *space* glyph keep its
+   monospace advance, which reads as a broken word gap. English gets the
+   engraved treatment (mono, uppercase, tracked); Arabic never gets tracking,
+   because letter-spacing pulls joined script apart. */
+@utility label-micro {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  line-height: 1;
+  color: var(--muted-foreground);
+}
+:where(html[lang="en"]) .label-micro {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
 }
 
-/* Liquid-glass surface treatment in dark mode.
-   Adds backdrop blur + an inner highlight to any element using a translucent
-   semantic surface token. Applied globally so existing pages get the look
-   without rewriting every card. */
-.dark .bg-card,
-.dark .bg-popover,
-.dark .bg-secondary,
-.dark .bg-muted,
-.dark .bg-accent {
-  backdrop-filter: blur(22px) saturate(160%);
-  -webkit-backdrop-filter: blur(22px) saturate(160%);
-  box-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.08),
-    0 1px 0 0 rgba(0, 0, 0, 0.25);
-}
-
-/* Hide scrollbars app-wide — content still scrolls, the bar is just not
-   painted. Matches native mobile-app feel where users discover scroll by
-   trying it. */
-html, body {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge legacy */
-}
-html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-*::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
-}
-
-/* ===== Branded Sonner toasts =====
-   Pill-shaped, glassy, swipeable. Loading toasts get a rotating emerald
-   border beam. Sonner provides swipe-to-dismiss out of the box. */
-.ei-toast {
+@utility panel {
   position: relative;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: inset 0 1px 0 0 oklch(1 0 0 / 5%), 0 1px 2px 0 oklch(0 0 0 / 40%);
+}
+
+/* A hairline that fades at both ends — an engraved rule, not a hard divider. */
+@utility rule-fade {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border) 15%, var(--border) 85%, transparent);
+}
+
+/* Status lamp: a dot with a matching halo, like a real tell-tale. */
+@utility lamp {
+  position: relative;
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: currentColor;
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, currentColor 18%, transparent),
+    0 0 10px 0 color-mix(in oklab, currentColor 55%, transparent);
+}
+
+@keyframes lamp-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+.lamp-live { animation: lamp-pulse 1.8s ease-in-out infinite; }
+
+/* Sweep across the live-diagnostic banner while the assistant is measuring. */
+@keyframes scan-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.scan-sweep { position: relative; overflow: hidden; }
+.scan-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, oklch(0.78 0.155 68 / 20%), transparent);
+  animation: scan-sweep 1.7s ease-in-out infinite;
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.rise-in { animation: rise-in 0.35s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lamp-live, .scan-sweep::after, .rise-in { animation: none; }
+}
+
+/* ── Toasts ────────────────────────────────────────────────────────────── */
+.ei-toast {
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  padding: 0.625rem 1rem 0.625rem 0.875rem;
-  border-radius: 9999px;
-  background: color-mix(in oklab, #0f0e16 88%, transparent);
-  color: var(--color-foreground);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--popover);
+  color: var(--foreground);
   font-family: var(--font-sans);
   font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.2;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(22px) saturate(160%);
-  -webkit-backdrop-filter: blur(22px) saturate(160%);
-  box-shadow:
-    0 10px 30px -12px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
+  border-inline-start: 3px solid var(--muted-foreground);
+  box-shadow: 0 16px 40px -16px oklch(0 0 0 / 70%);
   width: max-content;
-  max-width: min(92vw, 28rem);
+  max-width: min(92vw, 30rem);
   margin-inline: auto;
 }
-.ei-toast-title { font-weight: 600; letter-spacing: -0.01em; }
-.ei-toast-desc { color: var(--color-muted-foreground); font-size: 0.78rem; margin-top: 2px; }
-.ei-toast-icon { display: inline-flex; align-items: center; justify-content: center; }
+.ei-toast-title { font-weight: 600; }
+.ei-toast-desc { color: var(--muted-foreground); font-size: 0.78rem; margin-top: 2px; }
+.ei-toast-success { border-inline-start-color: var(--success); }
+.ei-toast-success .ei-toast-icon { color: var(--success); }
+.ei-toast-error { border-inline-start-color: var(--destructive); }
+.ei-toast-error .ei-toast-icon { color: var(--destructive); }
+.ei-toast-loading { border-inline-start-color: var(--primary); }
+.ei-toast-loading .ei-toast-icon { color: var(--primary); }
 
-.ei-toast-close {
-  position: absolute !important;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  left: auto !important;
-  width: 20px !important;
-  height: 20px !important;
-  border-radius: 9999px !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  color: var(--color-foreground) !important;
-  opacity: 0;
-  transition: opacity 0.15s ease, background-color 0.15s ease;
-}
-.ei-toast:hover .ei-toast-close,
-.ei-toast:focus-within .ei-toast-close { opacity: 1; }
-.ei-toast-close:hover { background: rgba(255, 255, 255, 0.16) !important; }
-.ei-toast[data-styled="true"] { padding-right: 2rem; }
-
-/* Status accents */
-.ei-toast-success { border-color: color-mix(in oklab, oklch(0.7 0.18 155) 45%, transparent); }
-.ei-toast-success .ei-toast-icon { color: oklch(0.78 0.18 155); }
-.ei-toast-error {
-  background: var(--color-destructive) !important;
-  color: var(--color-destructive-foreground) !important;
-  border-color: color-mix(in oklab, var(--color-destructive) 72%, black) !important;
-  box-shadow:
-    0 10px 30px -12px color-mix(in oklab, var(--color-destructive) 45%, transparent),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
-}
-.ei-toast-error .ei-toast-title,
-.ei-toast-error .ei-toast-desc,
-.ei-toast-error .ei-toast-icon {
-  color: var(--color-destructive-foreground) !important;
-}
-.ei-toast-error .ei-toast-close {
-  color: var(--color-destructive-foreground) !important;
-  background: rgba(255, 255, 255, 0.16) !important;
-  border-color: rgba(255, 255, 255, 0.24) !important;
-}
-.ei-toast-error .ei-toast-close:hover {
-  background: rgba(255, 255, 255, 0.24) !important;
-}
-
-/* Loading toast: rotating emerald border beam */
-.ei-toast-loading {
-  background:
-    linear-gradient(color-mix(in oklab, #0f0e16 92%, transparent), color-mix(in oklab, #0f0e16 92%, transparent)) padding-box,
-    conic-gradient(
-      from var(--beam-angle, 0deg),
-      transparent 0deg,
-      transparent 280deg,
-      oklch(0.78 0.2 155) 320deg,
-      oklch(0.92 0.18 155) 340deg,
-      oklch(0.78 0.2 155) 360deg
-    ) border-box;
-  border: 1.5px solid transparent;
-  animation: ei-beam-rotate 1.6s linear infinite;
-}
-.ei-toast-loading .ei-toast-icon { color: oklch(0.78 0.2 155); }
-
-@property --beam-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-@keyframes ei-beam-rotate {
-  to { --beam-angle: 360deg; }
-}
-/* Fallback for browsers without @property: pulse the border instead */
-@supports not (background: paint(something)) {
-  .ei-toast-loading {
-    animation: ei-beam-pulse 1.6s ease-in-out infinite;
-  }
-  @keyframes ei-beam-pulse {
-    0%, 100% { border-color: oklch(0.7 0.18 155 / 0.4); }
-    50% { border-color: oklch(0.85 0.2 155 / 0.9); }
-  }
-}
-
-
+/* ── Chat markdown ─────────────────────────────────────────────────────── */
 @utility prose-chat {
   & p { margin-block: 0.5rem; }
   & p:first-child { margin-block-start: 0; }
@@ -295,18 +255,30 @@ body::-webkit-scrollbar,
   & ul { list-style: disc; }
   & ol { list-style: decimal; }
   & li { margin-block: 0.25rem; }
-  & h1, & h2, & h3 { margin-block: 0.75rem 0.35rem; font-weight: 600; }
+  & h1, & h2, & h3 {
+    margin-block: 0.85rem 0.35rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--accent-foreground);
+  }
+  & h1:first-child, & h2:first-child, & h3:first-child { margin-block-start: 0; }
   & code {
-    border-radius: 0.375rem;
+    font-family: var(--font-mono);
+    border-radius: var(--radius-sm);
     background: var(--secondary);
     padding: 0.1rem 0.3rem;
     font-size: 0.85em;
   }
   & pre {
     overflow-x: auto;
-    border-radius: 0.75rem;
-    background: var(--secondary);
+    border-radius: var(--radius-lg);
+    background: var(--background);
+    border: 1px solid var(--border);
     padding: 0.75rem;
   }
-  & strong { font-weight: 600; }
+  & strong { font-weight: 600; color: var(--foreground); }
+  & a { color: var(--accent-foreground); text-decoration: underline; }
+  & table { width: 100%; border-collapse: collapse; margin-block: 0.75rem; font-size: 0.85em; }
+  & th, & td { border: 1px solid var(--border); padding: 0.35rem 0.5rem; text-align: start; }
+  & th { background: var(--secondary); font-weight: 600; }
 }

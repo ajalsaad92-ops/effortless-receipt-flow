@@ -10,6 +10,15 @@ type Ctx = {
   connection: ObdConnection;
   connect: (transport?: ObdTransport, baudRate?: number) => Promise<void>;
   disconnect: () => Promise<void>;
+  /**
+   * Who currently owns the adapter, or null. There is one physical serial line
+   * and ELM327 answers one command at a time, so a background poller and the
+   * assistant's tool calls would otherwise queue behind each other — a 10s
+   * `monitor_sensors` would starve the live gauges completely.
+   */
+  owner: string | null;
+  acquire: (owner: string) => boolean;
+  release: (owner: string) => void;
 };
 
 const LAST_TRANSPORT_KEY = "gmobd.transport";
@@ -23,6 +32,28 @@ export function ObdProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<ObdStatus>("idle");
   const [deviceName, setDeviceName] = useState<string | null>(null);
   const [transport, setTransport] = useState<ObdTransport | null>(null);
+  const [owner, setOwner] = useState<string | null>(null);
+  // Web Bluetooth / Web Serial obviously do not exist during SSR, so probing
+  // them at render time made the server and the first client render disagree
+  // and React threw the whole tree away. Resolve after mount instead.
+  const [capabilities, setCapabilities] = useState({ ble: false, serial: false });
+
+  useEffect(() => {
+    setCapabilities({ ble: isBluetoothSupported(), serial: isSerialSupported() });
+  }, []);
+
+  const acquire = useCallback((next: string) => {
+    let granted = false;
+    setOwner((current) => {
+      granted = current === null || current === next;
+      return granted ? next : current;
+    });
+    return granted;
+  }, []);
+
+  const release = useCallback((next: string) => {
+    setOwner((current) => (current === next ? null : current));
+  }, []);
 
   // The adapter can vanish without us asking (out of range, unplugged, ignition
   // off). Reflect that immediately instead of leaving the header on "connected"
@@ -33,6 +64,7 @@ export function ObdProvider({ children }: { children: React.ReactNode }) {
       setStatus("idle");
       setDeviceName(null);
       setTransport(null);
+      setOwner(null);
     };
     return () => {
       connection.onDrop = null;
@@ -91,14 +123,17 @@ export function ObdProvider({ children }: { children: React.ReactNode }) {
     () => ({
       status,
       deviceName,
-      supported: isBluetoothSupported(),
-      serialSupported: isSerialSupported(),
+      supported: capabilities.ble,
+      serialSupported: capabilities.serial,
       transport,
       connection: connectionRef.current,
       connect,
       disconnect,
+      owner,
+      acquire,
+      release,
     }),
-    [status, deviceName, transport, connect, disconnect],
+    [status, deviceName, transport, connect, disconnect, owner, acquire, release, capabilities],
   );
 
   return <ObdContext.Provider value={value}>{children}</ObdContext.Provider>;
