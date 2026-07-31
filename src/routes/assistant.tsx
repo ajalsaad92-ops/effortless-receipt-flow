@@ -7,6 +7,7 @@ import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { useI18n } from "@/lib/i18n";
+import { reportToPrompt, useVehicleReport } from "@/lib/vehicle-report";
 
 export const Route = createFileRoute("/assistant")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -31,13 +32,18 @@ export const Route = createFileRoute("/assistant")({
 function AssistantPage() {
   const { t, lang } = useI18n();
   const { q } = Route.useSearch();
+  const { report } = useVehicleReport();
   const [chatId, setChatId] = useState(() => `chat-${Date.now()}`);
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const seeded = useRef(false);
 
-  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
+  const briefing = useMemo(() => reportToPrompt(report, lang), [report, lang]);
+  const transport = useMemo(
+    () => new DefaultChatTransport({ api: "/api/chat", body: { vehicleContext: briefing } }),
+    [briefing],
+  );
   const { messages, sendMessage, status } = useChat({
     id: chatId,
     transport,
@@ -93,6 +99,9 @@ function AssistantPage() {
       </div>
 
       <div className="rounded-3xl border border-border bg-card">
+        {briefing ? (
+          <p className="border-b border-border px-4 py-2.5 text-xs text-success sm:px-6">{t("ai_has_report")}</p>
+        ) : null}
         <div className="min-h-[45vh] space-y-4 p-4 sm:p-6">
           {messages.length === 0 ? (
             <div className="flex flex-wrap gap-2 py-8">
