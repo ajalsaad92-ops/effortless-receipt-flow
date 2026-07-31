@@ -106,6 +106,19 @@ export class ObdConnection {
     await this.send("04");
   }
 
+  /** Send a sequence of raw commands (used for brand profiles and actuator tests). */
+  async runCommands(commands: string[]): Promise<Array<{ command: string; response: string }>> {
+    const out: Array<{ command: string; response: string }> = [];
+    for (const command of commands) {
+      try {
+        out.push({ command, response: await this.send(command) });
+      } catch (error) {
+        out.push({ command, response: `ERROR: ${(error as Error).message}` });
+      }
+    }
+    return out;
+  }
+
   async readPid(pid: string): Promise<number[] | null> {
     const raw = await this.send(`01${pid}`);
     const bytes = raw
