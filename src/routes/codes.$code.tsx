@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Bot } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bot, Youtube } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { SeverityPill } from "@/components/SeverityPill";
-import { SYSTEM_LABEL, findDtc, guessSystem } from "@/lib/dtc-data";
+import { SYSTEM_LABEL, findDtc, guessSystem, youtubeSearchUrl } from "@/lib/dtc-data";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/codes/$code")({
@@ -59,14 +59,25 @@ function CodeDetail() {
           <p className="mt-3 text-sm text-muted-foreground">{t("not_found")}</p>
         )}
 
-        <Link
-          to="/assistant"
-          search={{ q: `${code}` }}
-          className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          <Bot className="size-4" />
-          {t("ask_ai_about")}
-        </Link>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Link
+            to="/assistant"
+            search={{ q: `${code}` }}
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            <Bot className="size-4" />
+            {t("ask_ai_about")}
+          </Link>
+          <a
+            href={youtubeSearchUrl(code, lang, dtc?.models ?? [])}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-secondary"
+          >
+            <Youtube className="size-4 text-destructive" />
+            {t("watch_fix")}
+          </a>
+        </div>
       </div>
 
       {dtc ? (
