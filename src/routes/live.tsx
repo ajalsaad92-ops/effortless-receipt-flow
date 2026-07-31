@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, CheckCircle2, Download, Play, Square, TriangleAlert } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { useI18n } from "@/lib/i18n";
@@ -42,55 +42,65 @@ function LivePage() {
   const [reading, setReading] = useState<LiveReading | null>(null);
   const [samples, setSamples] = useState<Array<LiveReading & { at: string }>>([]);
   const tick = useRef(0);
-  const busy = useRef(false);
-  const findings = analyzeTrend(samples);
+  const findings = useMemo(() => analyzeTrend(samples), [samples]);
 
   useEffect(() => {
     if (!running) return;
     let cancelled = false;
+    let timer = 0;
+    // one live object mutated in place: gauges update value-by-value instead of
+    // waiting for a whole (slow) round-trip of every PID, which is what made the
+    // screen jump between "—" and a number.
+    const current: LiveReading = { rpm: 0, speed: 0, coolant: 0, load: 0, intake: 0, throttle: 0, voltage: 14 };
 
-    const poll = async () => {
-      if (busy.current) return;
-      busy.current = true;
-      try {
-      let next: LiveReading;
-      if (demo || status !== "connected") {
-        next = demoReading(tick.current++);
-      } else {
-        // ELM327 is single-threaded: read one PID at a time, never in parallel.
-        const entries: Array<readonly [keyof typeof LIVE_PIDS, number]> = [];
-        for (const key of Object.keys(LIVE_PIDS) as Array<keyof typeof LIVE_PIDS>) {
+    const loop = async () => {
+      while (!cancelled) {
+        const started = Date.now();
+        if (demo || status !== "connected") {
+          Object.assign(current, demoReading(tick.current++));
           if (cancelled) return;
-          try {
-            const data = await connection.readPid(LIVE_PIDS[key]);
-            entries.push([key, data && data.length ? decodePid(key, data) : 0] as const);
-          } catch {
-            entries.push([key, 0] as const);
+          setReading({ ...current });
+        } else {
+          // ELM327 is single-threaded: read one PID at a time, never in parallel.
+          for (const key of Object.keys(LIVE_PIDS) as Array<keyof typeof LIVE_PIDS>) {
+            if (cancelled) return;
+            try {
+              const data = await connection.readPid(LIVE_PIDS[key]);
+              if (data && data.length) current[key] = decodePid(key, data);
+            } catch {
+              /* keep the previous value instead of blanking the gauge */
+            }
+            if (cancelled) return;
+            setReading({ ...current });
           }
+          // battery voltage changes slowly — poll it once every 10 rounds.
+          if (tick.current % 10 === 0) {
+            try {
+              const raw = await connection.send("ATRV", 3000);
+              const parsed = parseFloat(raw.replace(/[^0-9.]/g, ""));
+              if (!Number.isNaN(parsed) && parsed > 5 && parsed < 20) current.voltage = parsed;
+            } catch {
+              /* not all clones answer ATRV */
+            }
+          }
+          tick.current++;
+          if (cancelled) return;
+          setReading({ ...current });
         }
-        let voltage = 14;
-        try {
-          const raw = await connection.send("ATRV", 3000);
-          const parsed = parseFloat(raw.replace(/[^0-9.]/g, ""));
-          if (!Number.isNaN(parsed) && parsed > 5 && parsed < 20) voltage = parsed;
-        } catch {
-          /* not all clones answer ATRV */
-        }
-        next = { ...(Object.fromEntries(entries) as Omit<LiveReading, "voltage">), voltage };
-      }
-      if (cancelled) return;
-      setReading(next);
-      setSamples((prev) => [...prev.slice(-299), { ...next, at: new Date().toISOString() }]);
-      } finally {
-        busy.current = false;
+
+        setSamples((prev) => [...prev.slice(-299), { ...current, at: new Date().toISOString() }]);
+        // pace the loop: never faster than 1s, never blocking when the adapter is slow.
+        const wait = Math.max(200, 1000 - (Date.now() - started));
+        await new Promise<void>((resolve) => {
+          timer = window.setTimeout(resolve, wait);
+        });
       }
     };
 
-    poll();
-    const id = window.setInterval(poll, 1000);
+    void loop();
     return () => {
       cancelled = true;
-      window.clearInterval(id);
+      window.clearTimeout(timer);
     };
   }, [running, demo, status, connection]);
 
@@ -147,7 +157,7 @@ function LivePage() {
                 <span className="text-xs text-muted-foreground">{gauge.unit}</span>
               </p>
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary">
-                <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${pct}%` }} />
+                <div className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out" style={{ width: `${pct}%` }} />
               </div>
             </div>
           );
