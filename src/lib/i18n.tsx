@@ -205,6 +205,20 @@ const dict = {
   dtc_pending: { ar: "أعطال معلّقة", en: "Pending codes" },
   dtc_permanent: { ar: "أعطال دائمة", en: "Permanent codes" },
   sensor_snapshot: { ar: "لقطة الحساسات", en: "Sensor snapshot" },
+  ai_has_report: {
+    ar: "المساعد يعرف سيارتك الآن — تقرير الفحص الكامل مرفق مع كل سؤال.",
+    en: "The assistant knows your car — your full scan report is attached to every question.",
+  },
+  nav_diagrams: { ar: "المخططات", en: "Diagrams" },
+  diagrams_title: { ar: "مخططات أنظمة GM", en: "GM system diagrams" },
+  diagrams_d: {
+    ar: "مخططات تفاعلية توضح موقع كل قطعة وأكواد الأعطال المرتبطة بها — اضغط أي نقطة لعرض التفاصيل.",
+    en: "Interactive layouts showing where every part sits and which fault codes point to it — tap any hotspot for details.",
+  },
+  diagram_related_codes: { ar: "الأكواد المرتبطة", en: "Related codes" },
+  diagram_pick_part: { ar: "اختر نقطة على المخطط", en: "Pick a hotspot on the diagram" },
+  diagram_for_code: { ar: "موقع القطعة على السيارة", en: "Part location on the vehicle" },
+  open_diagram: { ar: "افتح المخطط", en: "Open diagram" },
 } as const;
 
 export type TKey = keyof typeof dict;
