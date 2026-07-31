@@ -38,14 +38,14 @@ function CodeDetail() {
   return (
     <AppShell>
       <Link
-        to="/codes"
+        to="/library"
         className="mb-5 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <BackIcon className="size-4" />
         {t("back")}
       </Link>
 
-      <div className="rounded-3xl border border-border bg-card p-6">
+      <div className="panel p-6">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-mono text-3xl font-semibold text-primary">{code}</h1>
           {dtc ? <SeverityPill severity={dtc.severity} /> : null}
@@ -64,7 +64,7 @@ function CodeDetail() {
           <Link
             to="/assistant"
             search={{ q: `${code}` }}
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
           >
             <Bot className="size-4" />
             {t("ask_ai_about")}
@@ -73,7 +73,7 @@ function CodeDetail() {
             href={youtubeSearchUrl(code, lang, dtc?.models ?? [])}
             target="_blank"
             rel="noreferrer noopener"
-            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-secondary"
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-elevated px-3.5 py-2 text-sm font-medium transition-colors hover:bg-secondary"
           >
             <Youtube className="size-4 text-destructive" />
             {t("watch_fix")}
@@ -117,14 +117,14 @@ function DiagramHints({ code }: { code: string }) {
   const hits = diagramsForCode(code);
   if (hits.length === 0) return null;
   return (
-    <section className="mt-3 rounded-3xl border border-border bg-card p-5">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t("diagram_for_code")}</h2>
+    <section className="mt-3 panel p-5">
+      <h2 className="mb-3 text-sm font-semibold text-muted-foreground">{t("diagram_for_code")}</h2>
       <ul className="space-y-2">
         {hits.map(({ diagram, part }) => (
-          <li key={`${diagram.id}-${part.id}`} className="rounded-2xl bg-secondary p-3.5">
+          <li key={`${diagram.id}-${part.id}`} className="rounded-lg bg-secondary p-3.5">
             <p className="text-sm font-medium">{lang === "ar" ? part.ar : part.en}</p>
             <p className="mt-1 text-xs text-muted-foreground">{lang === "ar" ? part.noteAr : part.noteEn}</p>
-            <Link to="/diagrams" className="mt-2 inline-block text-xs font-medium text-primary hover:underline">
+            <Link to="/library" className="mt-2 inline-block text-xs font-medium text-primary hover:underline">
               {t("open_diagram")} — {lang === "ar" ? diagram.ar : diagram.en}
             </Link>
           </li>
@@ -136,8 +136,8 @@ function DiagramHints({ code }: { code: string }) {
 
 function Block({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <section className={`rounded-3xl border border-border bg-card p-5 ${className}`}>
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2>
+    <section className={`panel p-5 ${className}`}>
+      <h2 className="mb-3 text-sm font-semibold text-muted-foreground">{title}</h2>
       {children}
     </section>
   );

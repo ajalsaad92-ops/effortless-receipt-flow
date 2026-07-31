@@ -17,6 +17,58 @@ const dict = {
   nav_assistant: { ar: "المساعد الذكي", en: "AI Assistant" },
   nav_controls: { ar: "الفحوصات والتحكم", en: "Tests & Control" },
   nav_sensors: { ar: "الحساسات", en: "Sensors" },
+  nav_diagnose: { ar: "الفحص", en: "Diagnose" },
+  nav_library: { ar: "المرجع", en: "Library" },
+
+  tab_quick_scan: { ar: "فحص سريع", en: "Quick scan" },
+  tab_full_report: { ar: "تقرير شامل", en: "Full report" },
+  tab_advanced: { ar: "متقدم", en: "Advanced" },
+  tab_gauges: { ar: "المؤشرات", en: "Gauges" },
+  tab_all_sensors: { ar: "كل الحساسات", en: "All sensors" },
+  tab_codes: { ar: "أكواد الأعطال", en: "Fault codes" },
+  tab_diagrams: { ar: "المخططات", en: "Diagrams" },
+
+  diagnose_title: { ar: "الفحص", en: "Diagnose" },
+  diagnose_d: {
+    ar: "اتصل بالجهاز، اقرأ الأعطال، ونفّذ فحصاً شاملاً للسيارة.",
+    en: "Connect the adapter, read faults, and run a full vehicle scan.",
+  },
+  library_title: { ar: "المرجع", en: "Library" },
+  library_d: {
+    ar: "قاعدة أكواد الأعطال ومخططات مواقع القطع.",
+    en: "Fault-code database and part-location diagrams.",
+  },
+
+  needs_adapter: {
+    ar: "هذه الشاشة تحتاج جهاز OBD2 متصلاً.",
+    en: "This screen needs a connected OBD2 adapter.",
+  },
+  connect_now: { ar: "الاتصال بالجهاز", en: "Connect adapter" },
+
+  vehicle_state: { ar: "حالة السيارة", en: "Vehicle state" },
+  state_stale: { ar: "لم تُقرأ بعد", en: "Not read yet" },
+  refresh_state: { ar: "تحديث الحالة", en: "Refresh state" },
+
+  live_mode: { ar: "الفحص المباشر", en: "Live diagnostics" },
+  live_mode_on: { ar: "الفحص المباشر مفعّل", en: "Live diagnostics on" },
+  live_mode_d: {
+    ar: "يقرأ المساعد سيارتك بنفسه قبل أن يجيب: يفحص الحالة والحساسات والأعطال، ويطلب منك تشغيل المحرك أو التحرك أو التوقف عند اللزوم.",
+    en: "The assistant reads your car itself before answering: it checks state, sensors and codes, and asks you to start, drive or stop when a test needs it.",
+  },
+  live_mode_needs_adapter: {
+    ar: "وصّل جهاز OBD2 لتفعيل الفحص المباشر. بدونه يجيب المساعد من معرفته فقط.",
+    en: "Connect an OBD2 adapter to enable live diagnostics. Without it the assistant answers from knowledge only.",
+  },
+  ai_reading_car: { ar: "يقرأ من السيارة…", en: "Reading the car…" },
+  action_needed: { ar: "مطلوب منك إجراء", en: "Action needed" },
+  action_why: { ar: "السبب", en: "Why" },
+  action_done: { ar: "تم — تابع", en: "Done — continue" },
+  action_skip: { ar: "تخطَّ هذه الخطوة", en: "Skip this step" },
+  tool_ran: { ar: "قراءة من السيارة", en: "Read from the vehicle" },
+
+  quick_stats: { ar: "نظرة سريعة", en: "At a glance" },
+  open: { ar: "افتح", en: "Open" },
+
   lang_switch: { ar: "English", en: "عربي" },
 
   home_title: { ar: "لوحة التحكم", en: "Dashboard" },
