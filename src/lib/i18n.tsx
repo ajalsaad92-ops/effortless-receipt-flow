@@ -14,6 +14,7 @@ const dict = {
   nav_live: { ar: "بيانات حية", en: "Live Data" },
   nav_garage: { ar: "المرآب", en: "Garage" },
   nav_assistant: { ar: "المساعد الذكي", en: "AI Assistant" },
+  nav_controls: { ar: "الفحوصات والتحكم", en: "Tests & Control" },
   lang_switch: { ar: "English", en: "عربي" },
 
   home_title: { ar: "لوحة التحكم", en: "Dashboard" },
@@ -96,6 +97,42 @@ const dict = {
   send: { ar: "إرسال", en: "Send" },
   ai_error: { ar: "تعذر الوصول للمساعد. حاول لاحقاً.", en: "Could not reach the assistant. Try again later." },
   new_chat: { ar: "محادثة جديدة", en: "New conversation" },
+
+  controls_title: { ar: "الفحوصات والتحكم", en: "Tests & control" },
+  controls_d: {
+    ar: "اختر نوع السيارة لتهيئة الجهاز تلقائياً، ثم نفّذ الفحوصات وأوامر التحكم المتاحة عبر OBD2.",
+    en: "Pick your vehicle to auto-configure the adapter, then run the available OBD2 tests and control commands.",
+  },
+  select_brand: { ar: "نوع السيارة", en: "Vehicle brand" },
+  brand_saved: { ar: "تم حفظ إعدادات السيارة", en: "Vehicle profile saved" },
+  protocol: { ar: "البروتوكول", en: "Protocol" },
+  apply_profile: { ar: "تهيئة الجهاز الآن", en: "Configure adapter now" },
+  profile_applied: { ar: "تمت تهيئة الجهاز", en: "Adapter configured" },
+  supported_models: { ar: "موديلات مدعومة", en: "Supported models" },
+  available_tests: { ar: "الفحوصات المتاحة", en: "Available tests" },
+  run_test: { ar: "تنفيذ", en: "Run" },
+  bidir: { ar: "أمر تحكم", en: "Control command" },
+  read_only: { ar: "قراءة فقط", en: "Read only" },
+  response: { ar: "الرد", en: "Response" },
+  raw_console: { ar: "أوامر يدوية (ELM327)", en: "Manual command console" },
+  send_command: { ar: "إرسال الأمر", en: "Send command" },
+  need_connection: { ar: "اتصل بجهاز OBD2 أولاً", en: "Connect an OBD2 adapter first" },
+  confirm_clear_title: { ar: "تأكيد مسح الأعطال", en: "Confirm clearing codes" },
+  confirm_clear_body: {
+    ar: "سيتم مسح جميع الأكواد المخزنة وبيانات الإطار المجمّد وإعادة ضبط مراقبات الجاهزية. لا تمسح قبل تسجيل الأكواد وإصلاح السبب.",
+    en: "This clears all stored codes, freeze-frame data and resets readiness monitors. Do not clear before recording the codes and fixing the cause.",
+  },
+  confirm: { ar: "تأكيد المسح", en: "Confirm clear" },
+  cleared_ok: { ar: "تم مسح الأعطال وإطفاء لمبة الفحص", en: "Codes cleared and MIL turned off" },
+  watch_fix: { ar: "شاهد طريقة الإصلاح على يوتيوب", en: "Watch the repair on YouTube" },
+  auto_diag: { ar: "التشخيص التلقائي المستمر", en: "Continuous auto-diagnosis" },
+  auto_diag_d: {
+    ar: "يقارن التطبيق القراءات ببعضها لحظياً (الدوران مقابل السرعة والحمل والحرارة والجهد) وينبهك عند أي خروج عن المتوقع.",
+    en: "The app cross-checks readings live (RPM vs speed, load, temperature, voltage) and warns whenever something is out of range.",
+  },
+  expected_val: { ar: "المتوقع", en: "Expected" },
+  diag_waiting: { ar: "ابدأ القراءة لعرض التشخيص التلقائي", en: "Start streaming to see the automatic diagnosis" },
+  all_good: { ar: "كل القراءات ضمن المعدل الطبيعي", en: "All readings are within normal range" },
 } as const;
 
 export type TKey = keyof typeof dict;

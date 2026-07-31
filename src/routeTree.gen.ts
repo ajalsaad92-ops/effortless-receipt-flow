@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ScanRouteImport } from './routes/scan'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as GarageRouteImport } from './routes/garage'
+import { Route as ControlsRouteImport } from './routes/controls'
 import { Route as CodesRouteImport } from './routes/codes'
 import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as IndexRouteImport } from './routes/index'
@@ -32,6 +33,11 @@ const LiveRoute = LiveRouteImport.update({
 const GarageRoute = GarageRouteImport.update({
   id: '/garage',
   path: '/garage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ControlsRoute = ControlsRouteImport.update({
+  id: '/controls',
+  path: '/controls',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CodesRoute = CodesRouteImport.update({
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/assistant': typeof AssistantRoute
   '/codes': typeof CodesRouteWithChildren
+  '/controls': typeof ControlsRoute
   '/garage': typeof GarageRoute
   '/live': typeof LiveRoute
   '/scan': typeof ScanRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/assistant': typeof AssistantRoute
+  '/controls': typeof ControlsRoute
   '/garage': typeof GarageRoute
   '/live': typeof LiveRoute
   '/scan': typeof ScanRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/assistant': typeof AssistantRoute
   '/codes': typeof CodesRouteWithChildren
+  '/controls': typeof ControlsRoute
   '/garage': typeof GarageRoute
   '/live': typeof LiveRoute
   '/scan': typeof ScanRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
     | '/'
     | '/assistant'
     | '/codes'
+    | '/controls'
     | '/garage'
     | '/live'
     | '/scan'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/assistant'
+    | '/controls'
     | '/garage'
     | '/live'
     | '/scan'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
     | '/'
     | '/assistant'
     | '/codes'
+    | '/controls'
     | '/garage'
     | '/live'
     | '/scan'
@@ -137,6 +149,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AssistantRoute: typeof AssistantRoute
   CodesRoute: typeof CodesRouteWithChildren
+  ControlsRoute: typeof ControlsRoute
   GarageRoute: typeof GarageRoute
   LiveRoute: typeof LiveRoute
   ScanRoute: typeof ScanRoute
@@ -164,6 +177,13 @@ declare module '@tanstack/react-router' {
       path: '/garage'
       fullPath: '/garage'
       preLoaderRoute: typeof GarageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/controls': {
+      id: '/controls'
+      path: '/controls'
+      fullPath: '/controls'
+      preLoaderRoute: typeof ControlsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/codes': {
@@ -227,6 +247,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AssistantRoute: AssistantRoute,
   CodesRoute: CodesRouteWithChildren,
+  ControlsRoute: ControlsRoute,
   GarageRoute: GarageRoute,
   LiveRoute: LiveRoute,
   ScanRoute: ScanRoute,
@@ -235,13 +256,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

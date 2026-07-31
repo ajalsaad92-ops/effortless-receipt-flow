@@ -1,3 +1,5 @@
+import { BRAND_DTCS } from "./dtc-brands";
+
 export type Severity = "low" | "medium" | "high";
 export type SystemKey = "engine" | "fuel" | "ignition" | "emissions" | "transmission" | "electrical" | "body" | "chassis" | "network";
 
@@ -426,11 +428,21 @@ export const DTC_DATABASE: Dtc[] = [
 ];
 
 const seen = new Set<string>();
-export const DTCS: Dtc[] = DTC_DATABASE.filter((d) => {
+export const DTCS: Dtc[] = [...DTC_DATABASE, ...BRAND_DTCS].filter((d) => {
   if (!/^[PBCU][0-9A-F]{4}$/i.test(d.code) || seen.has(d.code)) return false;
   seen.add(d.code);
   return true;
 });
+
+/** Direct YouTube search link showing how to repair a given code. */
+export function youtubeSearchUrl(code: string, lang: "ar" | "en", models: string[] = []) {
+  const model = models[0] ?? "";
+  const query =
+    lang === "ar"
+      ? `${code} ${model} شرح اصلاح عطل`
+      : `${code} ${model} diagnose and fix`;
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query.trim())}`;
+}
 
 export function findDtc(code: string): Dtc | undefined {
   const normalized = code.trim().toUpperCase();
