@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Activity, Cpu, Loader2, Radar, RefreshCw, Search } from "lucide-react";
+import { Activity, ChevronLeft, Cpu, Loader2, Radar, RefreshCw, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
@@ -27,14 +27,36 @@ export const Route = createFileRoute("/sensors")({
 const ECU_ADDRESSES = [
   { header: "7E0", ar: "كمبيوتر المحرك ECM", en: "Engine control (ECM)" },
   { header: "7E1", ar: "ناقل الحركة TCM", en: "Transmission (TCM)" },
-  { header: "7E2", ar: "وحدة إضافية", en: "Auxiliary module" },
-  { header: "760", ar: "نظام الفرامل ABS", en: "Brakes / ABS" },
+  { header: "7E2", ar: "وحدة إضافية 1", en: "Auxiliary module 1" },
+  { header: "7E3", ar: "وحدة إضافية 2", en: "Auxiliary module 2" },
+  { header: "7E4", ar: "وحدة إضافية 3", en: "Auxiliary module 3" },
+  { header: "7E5", ar: "وحدة إضافية 4", en: "Auxiliary module 4" },
+  { header: "7E6", ar: "وحدة إضافية 5", en: "Auxiliary module 5" },
+  { header: "7E7", ar: "وحدة إضافية 6", en: "Auxiliary module 6" },
+  { header: "760", ar: "نظام الفرامل ABS / EBCM", en: "Brakes / ABS (EBCM)" },
+  { header: "761", ar: "نظام الثبات ESC", en: "Stability control (ESC)" },
   { header: "7A0", ar: "وسائد الهواء SRS", en: "Airbags (SRS)" },
-  { header: "740", ar: "لوحة العدادات IPC", en: "Instrument cluster" },
+  { header: "740", ar: "لوحة العدادات IPC", en: "Instrument cluster (IPC)" },
   { header: "744", ar: "التكييف HVAC", en: "Climate (HVAC)" },
+  { header: "746", ar: "مروحة/تبريد إضافي", en: "Cooling / fan module" },
   { header: "750", ar: "وحدة الجسم BCM", en: "Body control (BCM)" },
+  { header: "751", ar: "وحدة الأبواب / النوافذ", en: "Door / window module" },
   { header: "720", ar: "الدركسون الكهربائي EPS", en: "Power steering (EPS)" },
+  { header: "730", ar: "نظام الترفيه / الراديو", en: "Radio / infotainment" },
+  { header: "731", ar: "وحدة الشاشة HMI", en: "Display / HMI module" },
+  { header: "732", ar: "الكاميرا الأمامية", en: "Front camera module" },
+  { header: "733", ar: "رادار / مساعدات القيادة", en: "Radar / ADAS" },
+  { header: "764", ar: "مستشعرات الركن", en: "Parking sensors" },
+  { header: "770", ar: "وحدة الاتصالات / OnStar", en: "Telematics / OnStar" },
+  { header: "771", ar: "مفتاح الإشعال / الإمّوبيلايزر", en: "Immobilizer / ignition" },
+  { header: "780", ar: "وحدة الوقود / المضخة", en: "Fuel pump module" },
+  { header: "7B0", ar: "حزام الأمان / التصادم", en: "Restraints / crash sensor" },
+  { header: "7C0", ar: "إضاءة / مصابيح أمامية", en: "Lighting / headlamp module" },
+  { header: "7D0", ar: "وحدة السقف / الفتحة", en: "Roof / sunroof module" },
 ];
+
+type EcuRow = { header: string; ar: string; en: string; online: boolean };
+type EcuDetail = { pids: string[]; dtcs: string[]; vin: string | null; raw: string };
 
 function SensorsPage() {
   const { t, lang } = useI18n();
@@ -46,7 +68,10 @@ function SensorsPage() {
   const [busy, setBusy] = useState<"scan" | "read" | "ecu" | null>(null);
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState<PidGroup | "all">("all");
-  const [ecus, setEcus] = useState<Array<{ header: string; ar: string; en: string; online: boolean }>>([]);
+  const [ecus, setEcus] = useState<EcuRow[]>([]);
+  const [openEcu, setOpenEcu] = useState<EcuRow | null>(null);
+  const [ecuDetail, setEcuDetail] = useState<EcuDetail | null>(null);
+  const [probing, setProbing] = useState(false);
   const [vin, setVin] = useState<string | null>(null);
 
   const list = useMemo(() => {
@@ -111,6 +136,20 @@ function SensorsPage() {
       toast.error((error as Error).message);
     } finally {
       setBusy(null);
+    }
+  };
+
+  const openModule = async (ecu: EcuRow) => {
+    if (!ecu.online || !requireLink()) return;
+    setOpenEcu(ecu);
+    setEcuDetail(null);
+    setProbing(true);
+    try {
+      setEcuDetail(await connection.probeEcu(ecu.header));
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setProbing(false);
     }
   };
 
@@ -212,25 +251,123 @@ function SensorsPage() {
         {ecus.length === 0 ? (
           <p className="mt-4 text-sm text-muted-foreground">{t("modules_empty")}</p>
         ) : (
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {ecus.map((ecu) => (
-              <div
-                key={ecu.header}
-                className={`flex items-center justify-between gap-3 rounded-2xl border p-3.5 ${
-                  ecu.online ? "border-success/40 bg-success/10" : "border-border"
-                }`}
-              >
-                <div>
-                  <p className="text-sm font-medium">{lang === "ar" ? ecu.ar : ecu.en}</p>
-                  <p className="font-mono text-[11px] text-muted-foreground">{ecu.header}</p>
-                </div>
-                <span className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${ecu.online ? "bg-success/20 text-success" : "bg-secondary text-muted-foreground"}`}>
-                  {ecu.online ? t("module_online") : t("module_offline")}
-                </span>
-              </div>
-            ))}
-          </div>
+          <>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {ecus.map((ecu) => {
+                const Tag = ecu.online ? "button" : "div";
+                return (
+                  <Tag
+                    key={ecu.header}
+                    {...(ecu.online ? { onClick: () => openModule(ecu), type: "button" as const } : {})}
+                    className={`flex w-full items-center justify-between gap-3 rounded-2xl border p-3.5 text-start ${
+                      ecu.online
+                        ? "border-success/40 bg-success/10 transition-colors hover:bg-success/20"
+                        : "border-border opacity-70"
+                    }`}
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{lang === "ar" ? ecu.ar : ecu.en}</p>
+                      <p className="font-mono text-[11px] text-muted-foreground">{ecu.header}</p>
+                    </div>
+                    <span className="flex items-center gap-1.5">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${
+                          ecu.online ? "bg-success/20 text-success" : "bg-secondary text-muted-foreground"
+                        }`}
+                      >
+                        {ecu.online ? t("module_online") : t("module_offline")}
+                      </span>
+                      {ecu.online ? <ChevronLeft className="size-4 text-success rtl:rotate-0 ltr:rotate-180" /> : null}
+                    </span>
+                  </Tag>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">{t("module_hint_offline")}</p>
+          </>
         )}
+
+        {openEcu ? (
+          <div className="mt-5 rounded-2xl border border-border bg-background p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold">{lang === "ar" ? openEcu.ar : openEcu.en}</p>
+                <p className="font-mono text-[11px] text-muted-foreground">{openEcu.header}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setOpenEcu(null);
+                  setEcuDetail(null);
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs hover:bg-secondary"
+              >
+                <X className="size-3.5" />
+                {t("module_close")}
+              </button>
+            </div>
+
+            {probing ? (
+              <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                {t("module_probe")}
+              </p>
+            ) : ecuDetail ? (
+              <div className="mt-4 space-y-4">
+                {ecuDetail.vin ? (
+                  <p className="font-mono text-xs text-muted-foreground" dir="ltr">
+                    VIN: {ecuDetail.vin}
+                  </p>
+                ) : null}
+
+                <div>
+                  <p className="text-xs font-semibold">{t("module_dtcs")}</p>
+                  {ecuDetail.dtcs.length === 0 ? (
+                    <p className="mt-1.5 text-xs text-muted-foreground">{t("module_no_dtcs")}</p>
+                  ) : (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {ecuDetail.dtcs.map((code) => (
+                        <span key={code} className="rounded-lg bg-destructive/10 px-2 py-1 font-mono text-[11px] text-destructive">
+                          {code}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold">
+                    {t("module_pids")} · {ecuDetail.pids.length}
+                  </p>
+                  {ecuDetail.pids.length === 0 ? (
+                    <p className="mt-1.5 text-xs text-muted-foreground">{t("module_none_pids")}</p>
+                  ) : (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {ecuDetail.pids.map((pid) => (
+                        <span
+                          key={pid}
+                          className="rounded-lg bg-secondary px-2 py-1 font-mono text-[11px] text-muted-foreground"
+                          title={PID_MAP.get(pid) ? (lang === "ar" ? PID_MAP.get(pid)!.ar : PID_MAP.get(pid)!.en) : undefined}
+                        >
+                          {PID_MAP.has(pid) ? `${pid} · ${lang === "ar" ? PID_MAP.get(pid)!.ar : PID_MAP.get(pid)!.en}` : pid}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {ecuDetail.raw ? (
+                  <div>
+                    <p className="text-xs font-semibold">{t("module_raw")}</p>
+                    <pre className="mt-2 overflow-x-auto rounded-xl bg-secondary p-3 font-mono text-[11px] text-muted-foreground" dir="ltr">
+                      {ecuDetail.raw}
+                    </pre>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </section>
     </AppShell>
   );
