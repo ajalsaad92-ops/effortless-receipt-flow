@@ -168,6 +168,16 @@ const dict = {
   modules_empty: { ar: "شغّل فحص وحدات التحكم لعرض الوحدات المتصلة", en: "Run the module scan to list connected modules" },
   module_online: { ar: "متصلة", en: "Online" },
   module_offline: { ar: "لا ترد", en: "No reply" },
+  module_open: { ar: "افتح الوحدة", en: "Open module" },
+  module_probe: { ar: "جارٍ فحص الوحدة…", en: "Probing module…" },
+  module_detail: { ar: "تفاصيل الوحدة", en: "Module details" },
+  module_pids: { ar: "المعرّفات المدعومة", en: "Supported PIDs" },
+  module_dtcs: { ar: "أعطال هذه الوحدة", en: "Module fault codes" },
+  module_no_dtcs: { ar: "لا توجد أعطال مخزّنة في هذه الوحدة", en: "No stored codes in this module" },
+  module_raw: { ar: "الرد الخام", en: "Raw reply" },
+  module_none_pids: { ar: "الوحدة لا تكشف معرّفات قياسية", en: "This module exposes no standard PIDs" },
+  module_close: { ar: "إغلاق", en: "Close" },
+  module_hint_offline: { ar: "الوحدات التي لا ترد غير قابلة للفتح", en: "Modules with no reply cannot be opened" },
 } as const;
 
 export type TKey = keyof typeof dict;
