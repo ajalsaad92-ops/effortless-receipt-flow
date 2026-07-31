@@ -187,7 +187,6 @@ const dict = {
   report_empty: { ar: "لم يتم تشغيل فحص كامل بعد — اتصل بالجهاز ثم ابدأ الفحص.", en: "No full scan yet — connect the adapter and start a scan." },
   run_full_scan: { ar: "ابدأ الفحص الكامل", en: "Run full scan" },
   scan_done: { ar: "اكتمل الفحص الكامل", en: "Full scan complete" },
-  export_report: { ar: "تنزيل التقرير", en: "Download report" },
   copy_report: { ar: "نسخ التقرير", en: "Copy report" },
   copied: { ar: "تم النسخ", en: "Copied" },
   ask_ai_with_report: { ar: "اسأل المساعد بالتقرير", en: "Ask the assistant" },
