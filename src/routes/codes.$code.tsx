@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Bot, Youtube } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { SeverityPill } from "@/components/SeverityPill";
 import { SYSTEM_LABEL, findDtc, guessSystem, youtubeSearchUrl } from "@/lib/dtc-data";
+import { diagramsForCode } from "@/lib/gm-diagrams";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/codes/$code")({
