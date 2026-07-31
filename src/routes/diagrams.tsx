@@ -68,18 +68,27 @@ function DiagramsPage() {
                 strokeWidth={0.4}
               />
             ))}
-            {diagram.parts.map((p) => {
+            {diagram.parts.map((p, i) => {
               const active = p.id === partId;
               return (
                 <g key={p.id} onClick={() => setPartId(p.id)} className="cursor-pointer">
-                  <circle cx={p.x} cy={p.y} r={active ? 3.4 : 2.4} className={active ? "fill-primary" : "fill-foreground/60"} />
                   <circle cx={p.x} cy={p.y} r={5.5} className="fill-primary/10" />
+                  <circle cx={p.x} cy={p.y} r={3.6} className={active ? "fill-primary" : "fill-foreground/70"} />
+                  <text
+                    x={p.x}
+                    y={p.y + 1.3}
+                    textAnchor="middle"
+                    className="pointer-events-none fill-background font-semibold"
+                    style={{ fontSize: 3.4 }}
+                  >
+                    {i + 1}
+                  </text>
                 </g>
               );
             })}
           </svg>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {diagram.parts.map((p) => (
+            {diagram.parts.map((p, i) => (
               <button
                 key={p.id}
                 onClick={() => setPartId(p.id)}
@@ -88,7 +97,7 @@ function DiagramsPage() {
                   p.id === partId ? "border-primary text-primary" : "border-border text-muted-foreground hover:bg-secondary",
                 )}
               >
-                {lang === "ar" ? p.ar : p.en}
+                {i + 1}. {lang === "ar" ? p.ar : p.en}
               </button>
             ))}
           </div>
