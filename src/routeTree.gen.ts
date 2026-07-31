@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ScanRouteImport } from './routes/scan'
+import { Route as LiveRouteImport } from './routes/live'
 import { Route as CodesRouteImport } from './routes/codes'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CodesIndexRouteImport } from './routes/codes.index'
@@ -19,6 +20,11 @@ import { Route as ApiChatRouteImport } from './routes/api/chat'
 const ScanRoute = ScanRouteImport.update({
   id: '/scan',
   path: '/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveRoute = LiveRouteImport.update({
+  id: '/live',
+  path: '/live',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CodesRoute = CodesRouteImport.update({
@@ -50,6 +56,7 @@ const ApiChatRoute = ApiChatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/codes': typeof CodesRouteWithChildren
+  '/live': typeof LiveRoute
   '/scan': typeof ScanRoute
   '/api/chat': typeof ApiChatRoute
   '/codes/$code': typeof CodesCodeRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/live': typeof LiveRoute
   '/scan': typeof ScanRoute
   '/api/chat': typeof ApiChatRoute
   '/codes/$code': typeof CodesCodeRoute
@@ -66,6 +74,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/codes': typeof CodesRouteWithChildren
+  '/live': typeof LiveRoute
   '/scan': typeof ScanRoute
   '/api/chat': typeof ApiChatRoute
   '/codes/$code': typeof CodesCodeRoute
@@ -73,13 +82,21 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/codes' | '/scan' | '/api/chat' | '/codes/$code' | '/codes/'
+  fullPaths:
+    | '/'
+    | '/codes'
+    | '/live'
+    | '/scan'
+    | '/api/chat'
+    | '/codes/$code'
+    | '/codes/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/scan' | '/api/chat' | '/codes/$code' | '/codes'
+  to: '/' | '/live' | '/scan' | '/api/chat' | '/codes/$code' | '/codes'
   id:
     | '__root__'
     | '/'
     | '/codes'
+    | '/live'
     | '/scan'
     | '/api/chat'
     | '/codes/$code'
@@ -89,6 +106,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CodesRoute: typeof CodesRouteWithChildren
+  LiveRoute: typeof LiveRoute
   ScanRoute: typeof ScanRoute
   ApiChatRoute: typeof ApiChatRoute
 }
@@ -100,6 +118,13 @@ declare module '@tanstack/react-router' {
       path: '/scan'
       fullPath: '/scan'
       preLoaderRoute: typeof ScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live': {
+      id: '/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof LiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/codes': {
@@ -155,6 +180,7 @@ const CodesRouteWithChildren = CodesRoute._addFileChildren(CodesRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CodesRoute: CodesRouteWithChildren,
+  LiveRoute: LiveRoute,
   ScanRoute: ScanRoute,
   ApiChatRoute: ApiChatRoute,
 }
