@@ -37,6 +37,7 @@ function ScanPage() {
   const [busy, setBusy] = useState(false);
   const [manual, setManual] = useState("");
   const [vehicleId, setVehicleId] = useState<string>("");
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const handleConnect = async () => {
     try {
@@ -66,11 +67,12 @@ function ScanPage() {
     try {
       await connection.clearTroubleCodes();
       setCodes([]);
-      toast.success(t("clear_codes"));
+      toast.success(t("cleared_ok"));
     } catch (error) {
       toast.error((error as Error).message);
     } finally {
       setBusy(false);
+      setConfirmClear(false);
     }
   };
 
@@ -126,7 +128,7 @@ function ScanPage() {
                   {t("read_codes")}
                 </button>
                 <button
-                  onClick={handleClear}
+                  onClick={() => setConfirmClear(true)}
                   disabled={busy}
                   className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm disabled:opacity-60"
                 >
@@ -151,6 +153,25 @@ function ScanPage() {
               </button>
             )}
           </div>
+
+          {confirmClear ? (
+            <div className="mt-4 rounded-2xl border border-warning/40 bg-warning/10 p-4">
+              <p className="text-sm font-medium">{t("confirm_clear_title")}</p>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{t("confirm_clear_body")}</p>
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={handleClear}
+                  disabled={busy}
+                  className="rounded-full bg-destructive px-4 py-2 text-xs font-medium text-destructive-foreground disabled:opacity-60"
+                >
+                  {t("confirm")}
+                </button>
+                <button onClick={() => setConfirmClear(false)} className="rounded-full border border-border px-4 py-2 text-xs">
+                  {t("cancel")}
+                </button>
+              </div>
+            </div>
+          ) : null}
         </section>
 
         <section className="rounded-3xl border border-border bg-card p-5">
