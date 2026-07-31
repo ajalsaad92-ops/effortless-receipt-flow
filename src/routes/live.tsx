@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, Play, Square } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Download, Play, Square, TriangleAlert } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { useI18n } from "@/lib/i18n";
 import { useObd } from "@/lib/obd-context";
 import { LIVE_PIDS, decodePid, demoReading, type LiveReading } from "@/lib/obd";
+import { analyzeTrend } from "@/lib/diagnostics";
 
 export const Route = createFileRoute("/live")({
   head: () => ({
@@ -41,6 +42,7 @@ function LivePage() {
   const [reading, setReading] = useState<LiveReading | null>(null);
   const [samples, setSamples] = useState<Array<LiveReading & { at: string }>>([]);
   const tick = useRef(0);
+  const findings = analyzeTrend(samples);
 
   useEffect(() => {
     if (!running) return;
@@ -139,6 +141,40 @@ function LivePage() {
       <p className="mt-4 text-xs text-muted-foreground">
         {samples.length} {lang === "ar" ? "عينة مسجلة" : "samples recorded"}
       </p>
+
+      <section className="mt-6 rounded-3xl border border-border bg-card p-5">
+        <h2 className="text-sm font-semibold">{t("auto_diag")}</h2>
+        <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{t("auto_diag_d")}</p>
+
+        {samples.length === 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">{t("diag_waiting")}</p>
+        ) : findings.length === 0 ? (
+          <p className="mt-4 text-sm text-success">{t("all_good")}</p>
+        ) : (
+          <ul className="mt-4 space-y-2">
+            {findings.map((finding) => {
+              const Icon = finding.level === "bad" ? AlertTriangle : finding.level === "warn" ? TriangleAlert : CheckCircle2;
+              const tone =
+                finding.level === "bad"
+                  ? "border-destructive/40 bg-destructive/10 text-destructive"
+                  : finding.level === "warn"
+                    ? "border-warning/40 bg-warning/10 text-warning"
+                    : "border-success/40 bg-success/10 text-success";
+              return (
+                <li key={finding.id} className={`rounded-2xl border p-3.5 ${tone}`}>
+                  <p className="flex gap-2 text-sm font-medium leading-relaxed">
+                    <Icon className="mt-0.5 size-4 shrink-0" />
+                    {lang === "ar" ? finding.ar : finding.en}
+                  </p>
+                  <p className="mt-1.5 ps-6 text-xs text-muted-foreground">
+                    {t("expected_val")}: {lang === "ar" ? finding.expectedAr : finding.expectedEn}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
     </AppShell>
   );
 }
