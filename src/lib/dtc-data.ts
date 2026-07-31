@@ -1,3 +1,5 @@
+import { BRAND_DTCS } from "./dtc-brands";
+
 export type Severity = "low" | "medium" | "high";
 export type SystemKey = "engine" | "fuel" | "ignition" | "emissions" | "transmission" | "electrical" | "body" | "chassis" | "network";
 
