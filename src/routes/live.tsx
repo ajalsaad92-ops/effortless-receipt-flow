@@ -42,6 +42,7 @@ function LivePage() {
   const [reading, setReading] = useState<LiveReading | null>(null);
   const [samples, setSamples] = useState<Array<LiveReading & { at: string }>>([]);
   const tick = useRef(0);
+  const busy = useRef(false);
   const findings = analyzeTrend(samples);
 
   useEffect(() => {
@@ -49,25 +50,40 @@ function LivePage() {
     let cancelled = false;
 
     const poll = async () => {
+      if (busy.current) return;
+      busy.current = true;
+      try {
       let next: LiveReading;
       if (demo || status !== "connected") {
         next = demoReading(tick.current++);
       } else {
-        const entries = await Promise.all(
-          (Object.keys(LIVE_PIDS) as Array<keyof typeof LIVE_PIDS>).map(async (key) => {
-            try {
-              const data = await connection.readPid(LIVE_PIDS[key]);
-              return [key, data ? decodePid(key, data) : 0] as const;
-            } catch {
-              return [key, 0] as const;
-            }
-          }),
-        );
-        next = { ...(Object.fromEntries(entries) as Omit<LiveReading, "voltage">), voltage: 14 };
+        // ELM327 is single-threaded: read one PID at a time, never in parallel.
+        const entries: Array<readonly [keyof typeof LIVE_PIDS, number]> = [];
+        for (const key of Object.keys(LIVE_PIDS) as Array<keyof typeof LIVE_PIDS>) {
+          if (cancelled) return;
+          try {
+            const data = await connection.readPid(LIVE_PIDS[key]);
+            entries.push([key, data && data.length ? decodePid(key, data) : 0] as const);
+          } catch {
+            entries.push([key, 0] as const);
+          }
+        }
+        let voltage = 14;
+        try {
+          const raw = await connection.send("ATRV", 3000);
+          const parsed = parseFloat(raw.replace(/[^0-9.]/g, ""));
+          if (!Number.isNaN(parsed) && parsed > 5 && parsed < 20) voltage = parsed;
+        } catch {
+          /* not all clones answer ATRV */
+        }
+        next = { ...(Object.fromEntries(entries) as Omit<LiveReading, "voltage">), voltage };
       }
       if (cancelled) return;
       setReading(next);
       setSamples((prev) => [...prev.slice(-299), { ...next, at: new Date().toISOString() }]);
+      } finally {
+        busy.current = false;
+      }
     };
 
     poll();
