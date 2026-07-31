@@ -17,7 +17,7 @@ export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const body = (await request.json()) as { messages?: unknown };
+        const body = (await request.json()) as { messages?: unknown; vehicleContext?: unknown };
         if (!Array.isArray(body.messages)) {
           return new Response("Messages are required", { status: 400 });
         }
@@ -26,9 +26,13 @@ export const Route = createFileRoute("/api/chat")({
         if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
 
         const gateway = createLovableAiGatewayProvider(key);
+        const context =
+          typeof body.vehicleContext === "string" && body.vehicleContext.trim()
+            ? `\n\nLive vehicle data from the connected OBD2 adapter. Use it instead of asking the user for details you can already see:\n${body.vehicleContext.slice(0, 6000)}`
+            : "";
         const result = streamText({
           model: gateway("google/gemini-3.6-flash"),
-          system: SYSTEM_PROMPT,
+          system: SYSTEM_PROMPT + context,
           messages: await convertToModelMessages(body.messages as UIMessage[]),
         });
 

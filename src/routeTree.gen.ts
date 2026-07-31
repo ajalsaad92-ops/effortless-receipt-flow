@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SensorsRouteImport } from './routes/sensors'
 import { Route as ScanRouteImport } from './routes/scan'
+import { Route as ReportRouteImport } from './routes/report'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as GarageRouteImport } from './routes/garage'
+import { Route as DiagramsRouteImport } from './routes/diagrams'
 import { Route as ControlsRouteImport } from './routes/controls'
 import { Route as CodesRouteImport } from './routes/codes'
 import { Route as AssistantRouteImport } from './routes/assistant'
@@ -31,6 +33,11 @@ const ScanRoute = ScanRouteImport.update({
   path: '/scan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LiveRoute = LiveRouteImport.update({
   id: '/live',
   path: '/live',
@@ -39,6 +46,11 @@ const LiveRoute = LiveRouteImport.update({
 const GarageRoute = GarageRouteImport.update({
   id: '/garage',
   path: '/garage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiagramsRoute = DiagramsRouteImport.update({
+  id: '/diagrams',
+  path: '/diagrams',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ControlsRoute = ControlsRouteImport.update({
@@ -82,8 +94,10 @@ export interface FileRoutesByFullPath {
   '/assistant': typeof AssistantRoute
   '/codes': typeof CodesRouteWithChildren
   '/controls': typeof ControlsRoute
+  '/diagrams': typeof DiagramsRoute
   '/garage': typeof GarageRoute
   '/live': typeof LiveRoute
+  '/report': typeof ReportRoute
   '/scan': typeof ScanRoute
   '/sensors': typeof SensorsRoute
   '/api/chat': typeof ApiChatRoute
@@ -94,8 +108,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/assistant': typeof AssistantRoute
   '/controls': typeof ControlsRoute
+  '/diagrams': typeof DiagramsRoute
   '/garage': typeof GarageRoute
   '/live': typeof LiveRoute
+  '/report': typeof ReportRoute
   '/scan': typeof ScanRoute
   '/sensors': typeof SensorsRoute
   '/api/chat': typeof ApiChatRoute
@@ -108,8 +124,10 @@ export interface FileRoutesById {
   '/assistant': typeof AssistantRoute
   '/codes': typeof CodesRouteWithChildren
   '/controls': typeof ControlsRoute
+  '/diagrams': typeof DiagramsRoute
   '/garage': typeof GarageRoute
   '/live': typeof LiveRoute
+  '/report': typeof ReportRoute
   '/scan': typeof ScanRoute
   '/sensors': typeof SensorsRoute
   '/api/chat': typeof ApiChatRoute
@@ -123,8 +141,10 @@ export interface FileRouteTypes {
     | '/assistant'
     | '/codes'
     | '/controls'
+    | '/diagrams'
     | '/garage'
     | '/live'
+    | '/report'
     | '/scan'
     | '/sensors'
     | '/api/chat'
@@ -135,8 +155,10 @@ export interface FileRouteTypes {
     | '/'
     | '/assistant'
     | '/controls'
+    | '/diagrams'
     | '/garage'
     | '/live'
+    | '/report'
     | '/scan'
     | '/sensors'
     | '/api/chat'
@@ -148,8 +170,10 @@ export interface FileRouteTypes {
     | '/assistant'
     | '/codes'
     | '/controls'
+    | '/diagrams'
     | '/garage'
     | '/live'
+    | '/report'
     | '/scan'
     | '/sensors'
     | '/api/chat'
@@ -162,8 +186,10 @@ export interface RootRouteChildren {
   AssistantRoute: typeof AssistantRoute
   CodesRoute: typeof CodesRouteWithChildren
   ControlsRoute: typeof ControlsRoute
+  DiagramsRoute: typeof DiagramsRoute
   GarageRoute: typeof GarageRoute
   LiveRoute: typeof LiveRoute
+  ReportRoute: typeof ReportRoute
   ScanRoute: typeof ScanRoute
   SensorsRoute: typeof SensorsRoute
   ApiChatRoute: typeof ApiChatRoute
@@ -185,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ScanRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/live': {
       id: '/live'
       path: '/live'
@@ -197,6 +230,13 @@ declare module '@tanstack/react-router' {
       path: '/garage'
       fullPath: '/garage'
       preLoaderRoute: typeof GarageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagrams': {
+      id: '/diagrams'
+      path: '/diagrams'
+      fullPath: '/diagrams'
+      preLoaderRoute: typeof DiagramsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/controls': {
@@ -268,8 +308,10 @@ const rootRouteChildren: RootRouteChildren = {
   AssistantRoute: AssistantRoute,
   CodesRoute: CodesRouteWithChildren,
   ControlsRoute: ControlsRoute,
+  DiagramsRoute: DiagramsRoute,
   GarageRoute: GarageRoute,
   LiveRoute: LiveRoute,
+  ReportRoute: ReportRoute,
   ScanRoute: ScanRoute,
   SensorsRoute: SensorsRoute,
   ApiChatRoute: ApiChatRoute,

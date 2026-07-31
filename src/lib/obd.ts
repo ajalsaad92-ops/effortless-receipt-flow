@@ -220,6 +220,137 @@ export class ObdConnection {
     await this.send("04");
   }
 
+  /** DTCs split per mode: 03 stored, 07 pending, 0A permanent. */
+  async readTroubleCodesByMode(): Promise<{ stored: string[]; pending: string[]; permanent: string[] }> {
+    const out = { stored: [] as string[], pending: [] as string[], permanent: [] as string[] };
+    const modes = [
+      ["03", "stored"],
+      ["07", "pending"],
+      ["0A", "permanent"],
+    ] as const;
+    for (const [mode, key] of modes) {
+      try {
+        out[key] = parseDtcResponse(await this.send(mode, 7000));
+      } catch {
+        /* mode unsupported */
+      }
+    }
+    return out;
+  }
+
+  /** Mode 01 PID 01 — MIL lamp state and stored DTC count. */
+  async readMilStatus(): Promise<{ mil: boolean; count: number } | null> {
+    try {
+      const data = await this.readPid("01");
+      if (!data || data.length < 1) return null;
+      return { mil: Boolean(data[0] & 0x80), count: data[0] & 0x7f };
+    } catch {
+      return null;
+    }
+  }
+
+  /** Mode 09 free-text info (04 = CALID, 06 = CVN, 0A = ECU name). */
+  async readMode09Text(pid: string): Promise<string | null> {
+    try {
+      const raw = await this.send(`09${pid}`, 6000);
+      const bytes = hexBytes(raw, `09${pid}`);
+      const text = bytes
+        .filter((b) => b >= 0x20 && b <= 0x7e)
+        .map((b) => String.fromCharCode(b))
+        .join("")
+        .trim();
+      return text.length >= 3 ? text : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Adapter-reported protocol name (ATDP) and battery voltage (ATRV). */
+  async readAdapterInfo(): Promise<{ protocol: string | null; voltage: number | null }> {
+    let protocol: string | null = null;
+    let voltage: number | null = null;
+    try {
+      protocol = (await this.send("ATDP", 4000)).replace(/[\r\n>]/g, "").trim() || null;
+    } catch {
+      /* ignore */
+    }
+    try {
+      const parsed = parseFloat((await this.send("ATRV", 3000)).replace(/[^0-9.]/g, ""));
+      if (!Number.isNaN(parsed) && parsed > 5 && parsed < 20) voltage = parsed;
+    } catch {
+      /* ignore */
+    }
+    return { protocol, voltage };
+  }
+
+  /** Reconnect to an already-granted BLE device / serial port without a picker. */
+  async reconnectKnown(transport: ObdTransport, baudRate = 38400): Promise<string | null> {
+    if (transport === "serial") {
+      if (!isSerialSupported()) return null;
+      const ports = await (navigator as any).serial.getPorts();
+      const port = ports?.[0];
+      if (!port) return null;
+      await port.open({ baudRate, dataBits: 8, stopBits: 1, parity: "none", bufferSize: 4096 });
+      this.port = port;
+      this.transport = "serial";
+      this.open = true;
+      this.serialWriter = port.writable.getWriter();
+      this.serialReader = port.readable.getReader();
+      const decoder = new TextDecoder();
+      void (async () => {
+        try {
+          while (this.open) {
+            const { value, done } = await this.serialReader.read();
+            if (done) break;
+            if (value) this.pushChunk(decoder.decode(value));
+          }
+        } catch {
+          /* closed */
+        }
+      })();
+      await this.initAdapter();
+      return "ELM327 (Serial)";
+    }
+
+    if (!isBluetoothSupported()) return null;
+    const bt = (navigator as any).bluetooth;
+    if (typeof bt.getDevices !== "function") return null;
+    const devices = await bt.getDevices();
+    if (!devices?.length) return null;
+    for (const device of devices) {
+      try {
+        const server = await device.gatt.connect();
+        let service: any = null;
+        for (const uuid of FALLBACK_SERVICES) {
+          try {
+            service = await server.getPrimaryService(uuid);
+            if (service) break;
+          } catch {
+            /* next */
+          }
+        }
+        if (!service) continue;
+        const characteristics = await service.getCharacteristics();
+        const notify = characteristics.find((c: any) => c.properties.notify);
+        const write = characteristics.find((c: any) => c.properties.write || c.properties.writeWithoutResponse);
+        if (!notify || !write) continue;
+        await notify.startNotifications();
+        notify.addEventListener("characteristicvaluechanged", (event: any) => {
+          this.pushChunk(new TextDecoder().decode(event.target.value as DataView));
+        });
+        this.device = device;
+        this.writer = write;
+        this.transport = "ble";
+        this.open = true;
+        await this.initAdapter();
+        return device.name ?? "OBD adapter";
+      } catch {
+        /* try next known device */
+      }
+    }
+    return null;
+  }
+
   /** Send a sequence of raw commands (used for brand profiles and actuator tests). */
   async runCommands(commands: string[]): Promise<Array<{ command: string; response: string }>> {
     const out: Array<{ command: string; response: string }> = [];

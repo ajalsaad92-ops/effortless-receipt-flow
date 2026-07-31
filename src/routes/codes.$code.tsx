@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Bot, Youtube } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { SeverityPill } from "@/components/SeverityPill";
 import { SYSTEM_LABEL, findDtc, guessSystem, youtubeSearchUrl } from "@/lib/dtc-data";
+import { diagramsForCode } from "@/lib/gm-diagrams";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/codes/$code")({
@@ -105,7 +106,31 @@ function CodeDetail() {
           </Block>
         </div>
       ) : null}
+
+      <DiagramHints code={code} />
     </AppShell>
+  );
+}
+
+function DiagramHints({ code }: { code: string }) {
+  const { t, lang } = useI18n();
+  const hits = diagramsForCode(code);
+  if (hits.length === 0) return null;
+  return (
+    <section className="mt-3 rounded-3xl border border-border bg-card p-5">
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{t("diagram_for_code")}</h2>
+      <ul className="space-y-2">
+        {hits.map(({ diagram, part }) => (
+          <li key={`${diagram.id}-${part.id}`} className="rounded-2xl bg-secondary p-3.5">
+            <p className="text-sm font-medium">{lang === "ar" ? part.ar : part.en}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{lang === "ar" ? part.noteAr : part.noteEn}</p>
+            <Link to="/diagrams" className="mt-2 inline-block text-xs font-medium text-primary hover:underline">
+              {t("open_diagram")} — {lang === "ar" ? diagram.ar : diagram.en}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
