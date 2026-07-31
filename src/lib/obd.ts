@@ -1,5 +1,8 @@
 /**
- * Minimal ELM327 client over Web Bluetooth (Nordic UART style services).
+ * Minimal ELM327 client supporting two transports:
+ *  - Web Bluetooth (BLE 4.0 adapters: Vgate iCar, Viecar, OBDLink CX ...)
+ *  - Web Serial   (classic Bluetooth SPP adapters paired as a COM/serial port,
+ *                  which is how almost every ELM327 clone appears on a laptop)
  * All browser APIs are touched lazily so the module stays SSR-safe.
  */
 
@@ -9,9 +12,14 @@ const UART_RX = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 const FALLBACK_SERVICES = [UART_SERVICE, "0000fff0-0000-1000-8000-00805f9b34fb", "0000ffe0-0000-1000-8000-00805f9b34fb"];
 
 export type ObdStatus = "idle" | "connecting" | "connected";
+export type ObdTransport = "ble" | "serial";
 
 export function isBluetoothSupported() {
   return typeof navigator !== "undefined" && "bluetooth" in navigator;
+}
+
+export function isSerialSupported() {
+  return typeof navigator !== "undefined" && "serial" in navigator;
 }
 
 type AnyBt = {
@@ -21,16 +29,66 @@ type AnyBt = {
 export class ObdConnection {
   private device: any = null;
   private writer: any = null;
+  private port: any = null;
+  private serialWriter: any = null;
+  private serialReader: any = null;
+  private transport: ObdTransport = "ble";
+  private open = false;
   private buffer = "";
   private resolvers: Array<(v: string) => void> = [];
 
-  async connect() {
+  private pushChunk(text: string) {
+    this.buffer += text;
+    if (this.buffer.includes(">")) {
+      const chunk = this.buffer.replace(/>/g, "").trim();
+      this.buffer = "";
+      const resolve = this.resolvers.shift();
+      resolve?.(chunk);
+    }
+  }
+
+  async connect(transport: ObdTransport = "ble", baudRate = 38400) {
+    return transport === "serial" ? this.connectSerial(baudRate) : this.connectBle();
+  }
+
+  /** Classic Bluetooth SPP / USB adapters exposed as a serial port. */
+  async connectSerial(baudRate = 38400) {
+    if (!isSerialSupported()) throw new Error("serial-unsupported");
+    const serial = (navigator as any).serial;
+    const port = await serial.requestPort();
+    await port.open({ baudRate, dataBits: 8, stopBits: 1, parity: "none", bufferSize: 4096 });
+
+    this.port = port;
+    this.transport = "serial";
+    this.open = true;
+    this.serialWriter = port.writable.getWriter();
+    this.serialReader = port.readable.getReader();
+
+    const decoder = new TextDecoder();
+    void (async () => {
+      try {
+        while (this.open) {
+          const { value, done } = await this.serialReader.read();
+          if (done) break;
+          if (value) this.pushChunk(decoder.decode(value));
+        }
+      } catch {
+        /* port closed */
+      }
+    })();
+
+    await this.initAdapter();
+    const info = port.getInfo?.() ?? {};
+    return info.usbProductId ? `Serial ${info.usbVendorId}:${info.usbProductId}` : "ELM327 (Serial)";
+  }
+
+  /** BLE (Bluetooth 4.0+) adapters. */
+  async connectBle() {
     if (!isBluetoothSupported()) throw new Error("bluetooth-unsupported");
     const bt = (navigator as unknown as { bluetooth: AnyBt }).bluetooth;
-    const device = await bt.requestDevice({
-      filters: [{ namePrefix: "OBD" }, { namePrefix: "ELM" }, { namePrefix: "Viecar" }, { namePrefix: "Vgate" }],
-      optionalServices: FALLBACK_SERVICES,
-    });
+    // Show every nearby BLE device: adapter names vary wildly (OBDII, IOS-Vlink,
+    // V-LINK, Konnwei, BLE-OBD ...) and name filters hide most of them.
+    const device = await bt.requestDevice({ acceptAllDevices: true, optionalServices: FALLBACK_SERVICES });
     const server = await device.gatt.connect();
 
     let service: any = null;
@@ -53,46 +111,67 @@ export class ObdConnection {
     await notify.startNotifications();
     notify.addEventListener("characteristicvaluechanged", (event: any) => {
       const value = event.target.value as DataView;
-      this.buffer += new TextDecoder().decode(value);
-      if (this.buffer.includes(">")) {
-        const chunk = this.buffer.replace(/>/g, "").trim();
-        this.buffer = "";
-        const resolve = this.resolvers.shift();
-        resolve?.(chunk);
-      }
+      this.pushChunk(new TextDecoder().decode(value));
     });
 
     this.device = device;
     this.writer = write;
+    this.transport = "ble";
+    this.open = true;
 
-    await this.send("ATZ");
-    await this.send("ATE0");
-    await this.send("ATSP0");
+    await this.initAdapter();
     return device.name ?? "OBD adapter";
   }
 
+  private async initAdapter() {
+    for (const cmd of ["ATZ", "ATE0", "ATL0", "ATS0", "ATSP0"]) {
+      try {
+        await this.send(cmd, 6000);
+      } catch {
+        /* some clones swallow the first command after reset */
+      }
+    }
+  }
+
   get isConnected() {
-    return Boolean(this.device?.gatt?.connected);
+    return this.transport === "serial" ? Boolean(this.port && this.open) : Boolean(this.device?.gatt?.connected);
   }
 
   async disconnect() {
     try {
-      this.device?.gatt?.disconnect();
+      this.open = false;
+      if (this.transport === "serial") {
+        try {
+          await this.serialReader?.cancel();
+          this.serialReader?.releaseLock();
+          this.serialWriter?.releaseLock();
+          await this.port?.close();
+        } catch {
+          /* ignore */
+        }
+      } else {
+        this.device?.gatt?.disconnect();
+      }
     } finally {
       this.device = null;
       this.writer = null;
+      this.port = null;
+      this.serialWriter = null;
+      this.serialReader = null;
+      this.buffer = "";
       this.resolvers = [];
     }
   }
 
   async send(command: string, timeoutMs = 5000): Promise<string> {
-    if (!this.writer) throw new Error("not-connected");
+    if (!this.writer && !this.serialWriter) throw new Error("not-connected");
     const payload = new TextEncoder().encode(`${command}\r`);
     const answer = new Promise<string>((resolve, reject) => {
       this.resolvers.push(resolve);
       setTimeout(() => reject(new Error("timeout")), timeoutMs);
     });
-    if (this.writer.writeValueWithoutResponse) await this.writer.writeValueWithoutResponse(payload);
+    if (this.serialWriter) await this.serialWriter.write(payload);
+    else if (this.writer.writeValueWithoutResponse) await this.writer.writeValueWithoutResponse(payload);
     else await this.writer.writeValue(payload);
     return answer;
   }
