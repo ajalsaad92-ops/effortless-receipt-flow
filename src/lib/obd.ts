@@ -545,7 +545,9 @@ export class ObdConnection {
       try {
         await this.send(`ATSH${item.header}`, 3000);
         const response = await this.send("0100", 3000);
-        const online = /41\s?00/i.test(response) || /^7E|^5|^6/i.test(response.trim());
+        // Only a real positive reply counts. The old test also accepted any
+        // response starting with "5" or "6", which marked absent modules online.
+        const online = /4\s?1\s?0\s?0/i.test(response.replace(/\s+/g, " ")) && !/NO DATA|UNABLE|ERROR/i.test(response);
         out.push({ ...item, online, response: response.trim() });
       } catch (error) {
         out.push({ ...item, online: false, response: (error as Error).message });

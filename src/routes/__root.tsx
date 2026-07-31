@@ -3,18 +3,23 @@ import { Outlet, Link, createRootRouteWithContext, useRouter, HeadContent, Scrip
 import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { I18nProvider } from "@/lib/i18n";
+import { readLang, type Lang } from "@/lib/lang";
 import { ObdProvider } from "@/lib/obd-context";
 
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-semibold tracking-tight text-foreground">404</h1>
+    <div className="grid min-h-screen place-items-center px-4">
+      <div className="text-center">
+        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Error 404</p>
+        <h1 className="mt-4 font-mono text-7xl font-semibold tracking-tight">404</h1>
         <h2 className="mt-4 text-xl font-medium">الصفحة غير موجودة</h2>
         <p className="mt-2 text-sm text-muted-foreground">هذه الصفحة غير متاحة أو تم نقلها.</p>
-        <Link to="/" className="mt-6 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground">
+        <Link
+          to="/"
+          className="mt-8 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
+        >
           العودة للرئيسية
         </Link>
       </div>
@@ -26,16 +31,17 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div className="grid min-h-screen place-items-center px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold">حدث خطأ غير متوقع</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-destructive">Fault</p>
+        <h1 className="mt-4 text-xl font-semibold">حدث خطأ غير متوقع</h1>
+        <p className="mt-2 font-mono text-xs text-muted-foreground">{error.message}</p>
         <button
           onClick={() => {
             router.invalidate();
             reset();
           }}
-          className="mt-6 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
+          className="mt-8 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
         >
           إعادة المحاولة
         </button>
@@ -45,11 +51,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  // Read once, on the server, from the cookie — so the HTML that ships already
+  // carries the right language and direction instead of flipping after paint.
+  beforeLoad: (): { lang: Lang } => ({ lang: readLang() }),
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { name: "theme-color", content: "#0b0a10" },
+      { name: "theme-color", content: "#08090b" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
@@ -67,7 +76,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap",
       },
     ],
   }),
@@ -78,8 +87,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
+  const { lang } = Route.useRouteContext();
   return (
-    <html lang="ar" dir="rtl">
+    <html lang={lang} dir={lang === "ar" ? "rtl" : "ltr"}>
       <head>
         <HeadContent />
       </head>
@@ -92,7 +102,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+  const { queryClient, lang } = Route.useRouteContext();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -110,12 +120,21 @@ function RootComponent() {
     };
   }, []);
 
+  // Reception in a workshop is unreliable and the reference data never changes.
+  useEffect(() => {
+    if (!import.meta.env.PROD) return;
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+    void navigator.serviceWorker.register("/sw.js").catch(() => {
+      /* offline support is a bonus, never a hard requirement */
+    });
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <I18nProvider>
+      <I18nProvider initialLang={lang}>
         <ObdProvider>
           <Outlet />
-          <Toaster position="top-center" closeButton richColors />
+          <Toaster position="top-center" closeButton richColors theme="dark" />
         </ObdProvider>
       </I18nProvider>
     </QueryClientProvider>

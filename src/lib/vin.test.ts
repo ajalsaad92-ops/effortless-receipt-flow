@@ -25,6 +25,23 @@ describe("decodeVinYear", () => {
     expect(decodeVinYear("F")).toBe(2015);
   });
 
+  it("uses position 7 to pick the right 30-year cycle", () => {
+    // numeric position 7 -> the 1980-2009 cycle
+    expect(decodeVinYear("A", "5")).toBe(1980);
+    expect(decodeVinYear("Y", "1")).toBe(2000);
+    // alphabetic position 7 -> the 2010+ cycle
+    expect(decodeVinYear("A", "S")).toBe(2010);
+  });
+
+  it("never returns a year in the future", () => {
+    const cutoff = new Date().getFullYear() + 1;
+    for (const c of "ABCDEFGHJKLMNPRSTVWXY123456789") {
+      const year = decodeVinYear(c);
+      expect(year).not.toBeNull();
+      expect(year!).toBeLessThanOrEqual(cutoff);
+    }
+  });
+
   it("skips the letters excluded from the year code table", () => {
     // I, O, Q, U and Z are never year codes
     for (const c of ["I", "O", "Q", "U", "Z"]) expect(decodeVinYear(c)).toBeNull();

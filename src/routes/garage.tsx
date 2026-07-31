@@ -6,6 +6,7 @@ import { AppShell, PageHeader } from "@/components/AppShell";
 import { useI18n } from "@/lib/i18n";
 import {
   SERVICE_PLAN,
+  StorageFullError,
   serviceStatus,
   useServiceLogs,
   useVehicles,
@@ -44,7 +45,12 @@ function GaragePage() {
       toast.error(t("model"));
       return;
     }
-    addVehicle(form);
+    try {
+      addVehicle(form);
+    } catch (error) {
+      toast.error(error instanceof StorageFullError ? t("storage_full") : (error as Error).message);
+      return;
+    }
     setForm(EMPTY);
     setOpen(false);
     toast.success(t("saved"));
