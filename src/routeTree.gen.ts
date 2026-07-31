@@ -13,6 +13,7 @@ import { Route as ScanRouteImport } from './routes/scan'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as GarageRouteImport } from './routes/garage'
 import { Route as CodesRouteImport } from './routes/codes'
+import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CodesIndexRouteImport } from './routes/codes.index'
 import { Route as CodesCodeRouteImport } from './routes/codes.$code'
@@ -38,6 +39,11 @@ const CodesRoute = CodesRouteImport.update({
   path: '/codes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AssistantRoute = AssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -61,6 +67,7 @@ const ApiChatRoute = ApiChatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/assistant': typeof AssistantRoute
   '/codes': typeof CodesRouteWithChildren
   '/garage': typeof GarageRoute
   '/live': typeof LiveRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/assistant': typeof AssistantRoute
   '/garage': typeof GarageRoute
   '/live': typeof LiveRoute
   '/scan': typeof ScanRoute
@@ -81,6 +89,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/assistant': typeof AssistantRoute
   '/codes': typeof CodesRouteWithChildren
   '/garage': typeof GarageRoute
   '/live': typeof LiveRoute
@@ -93,6 +102,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/assistant'
     | '/codes'
     | '/garage'
     | '/live'
@@ -103,6 +113,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/assistant'
     | '/garage'
     | '/live'
     | '/scan'
@@ -112,6 +123,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/assistant'
     | '/codes'
     | '/garage'
     | '/live'
@@ -123,6 +135,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AssistantRoute: typeof AssistantRoute
   CodesRoute: typeof CodesRouteWithChildren
   GarageRoute: typeof GarageRoute
   LiveRoute: typeof LiveRoute
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       path: '/codes'
       fullPath: '/codes'
       preLoaderRoute: typeof CodesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assistant': {
+      id: '/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AssistantRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -205,6 +225,7 @@ const CodesRouteWithChildren = CodesRoute._addFileChildren(CodesRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AssistantRoute: AssistantRoute,
   CodesRoute: CodesRouteWithChildren,
   GarageRoute: GarageRoute,
   LiveRoute: LiveRoute,
