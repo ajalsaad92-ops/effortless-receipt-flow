@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SensorsRouteImport } from './routes/sensors'
 import { Route as ScanRouteImport } from './routes/scan'
 import { Route as LiveRouteImport } from './routes/live'
 import { Route as GarageRouteImport } from './routes/garage'
@@ -20,6 +21,11 @@ import { Route as CodesIndexRouteImport } from './routes/codes.index'
 import { Route as CodesCodeRouteImport } from './routes/codes.$code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
+const SensorsRoute = SensorsRouteImport.update({
+  id: '/sensors',
+  path: '/sensors',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ScanRoute = ScanRouteImport.update({
   id: '/scan',
   path: '/scan',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/garage': typeof GarageRoute
   '/live': typeof LiveRoute
   '/scan': typeof ScanRoute
+  '/sensors': typeof SensorsRoute
   '/api/chat': typeof ApiChatRoute
   '/codes/$code': typeof CodesCodeRoute
   '/codes/': typeof CodesIndexRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/garage': typeof GarageRoute
   '/live': typeof LiveRoute
   '/scan': typeof ScanRoute
+  '/sensors': typeof SensorsRoute
   '/api/chat': typeof ApiChatRoute
   '/codes/$code': typeof CodesCodeRoute
   '/codes': typeof CodesIndexRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/garage': typeof GarageRoute
   '/live': typeof LiveRoute
   '/scan': typeof ScanRoute
+  '/sensors': typeof SensorsRoute
   '/api/chat': typeof ApiChatRoute
   '/codes/$code': typeof CodesCodeRoute
   '/codes/': typeof CodesIndexRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/garage'
     | '/live'
     | '/scan'
+    | '/sensors'
     | '/api/chat'
     | '/codes/$code'
     | '/codes/'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/garage'
     | '/live'
     | '/scan'
+    | '/sensors'
     | '/api/chat'
     | '/codes/$code'
     | '/codes'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/garage'
     | '/live'
     | '/scan'
+    | '/sensors'
     | '/api/chat'
     | '/codes/$code'
     | '/codes/'
@@ -153,11 +165,19 @@ export interface RootRouteChildren {
   GarageRoute: typeof GarageRoute
   LiveRoute: typeof LiveRoute
   ScanRoute: typeof ScanRoute
+  SensorsRoute: typeof SensorsRoute
   ApiChatRoute: typeof ApiChatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sensors': {
+      id: '/sensors'
+      path: '/sensors'
+      fullPath: '/sensors'
+      preLoaderRoute: typeof SensorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/scan': {
       id: '/scan'
       path: '/scan'
@@ -251,18 +271,9 @@ const rootRouteChildren: RootRouteChildren = {
   GarageRoute: GarageRoute,
   LiveRoute: LiveRoute,
   ScanRoute: ScanRoute,
+  SensorsRoute: SensorsRoute,
   ApiChatRoute: ApiChatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
