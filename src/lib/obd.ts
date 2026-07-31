@@ -36,6 +36,8 @@ export class ObdConnection {
   private open = false;
   private buffer = "";
   private resolvers: Array<(v: string) => void> = [];
+  /** ELM327 handles exactly one command at a time — every send is queued. */
+  private chain: Promise<unknown> = Promise.resolve();
 
   private pushChunk(text: string) {
     this.buffer += text;
@@ -124,12 +126,18 @@ export class ObdConnection {
   }
 
   private async initAdapter() {
-    for (const cmd of ["ATZ", "ATE0", "ATL0", "ATS0", "ATSP0"]) {
+    // Keep spaces ON (ATS1) and headers OFF so responses stay easy to parse.
+    for (const cmd of ["ATZ", "ATE0", "ATL0", "ATS1", "ATH0", "ATSP0"]) {
       try {
         await this.send(cmd, 6000);
       } catch {
         /* some clones swallow the first command after reset */
       }
+    }
+    try {
+      await this.send("0100", 9000);
+    } catch {
+      /* protocol search may time out on first try */
     }
   }
 
@@ -163,12 +171,30 @@ export class ObdConnection {
     }
   }
 
-  async send(command: string, timeoutMs = 5000): Promise<string> {
+  /** Queued so two commands never overlap on the wire. */
+  send(command: string, timeoutMs = 5000): Promise<string> {
+    const run = this.chain.then(
+      () => this.sendNow(command, timeoutMs),
+      () => this.sendNow(command, timeoutMs),
+    );
+    this.chain = run.catch(() => undefined);
+    return run;
+  }
+
+  private async sendNow(command: string, timeoutMs: number): Promise<string> {
     if (!this.writer && !this.serialWriter) throw new Error("not-connected");
+    this.buffer = "";
+    this.resolvers = [];
     const payload = new TextEncoder().encode(`${command}\r`);
+    let resolver: ((v: string) => void) | null = null;
     const answer = new Promise<string>((resolve, reject) => {
+      resolver = resolve;
       this.resolvers.push(resolve);
-      setTimeout(() => reject(new Error("timeout")), timeoutMs);
+      setTimeout(() => {
+        this.resolvers = this.resolvers.filter((r) => r !== resolver);
+        this.buffer = "";
+        reject(new Error("timeout"));
+      }, timeoutMs);
     });
     if (this.serialWriter) await this.serialWriter.write(payload);
     else if (this.writer.writeValueWithoutResponse) await this.writer.writeValueWithoutResponse(payload);
@@ -200,11 +226,7 @@ export class ObdConnection {
 
   async readPid(pid: string): Promise<number[] | null> {
     const raw = await this.send(`01${pid}`);
-    const bytes = raw
-      .replace(/[\r\n]/g, " ")
-      .split(/\s+/)
-      .filter((b) => /^[0-9A-F]{2}$/i.test(b))
-      .map((b) => parseInt(b, 16));
+    const bytes = hexBytes(raw, `01${pid}`);
     const start = bytes.findIndex((b, i) => b === 0x41 && bytes[i + 1] === parseInt(pid, 16));
     if (start === -1) return null;
     return bytes.slice(start + 2);
@@ -234,11 +256,7 @@ export class ObdConnection {
   /** Mode 09 PID 02 — vehicle identification number. */
   async readVin(): Promise<string | null> {
     const raw = await this.send("0902");
-    const bytes = raw
-      .replace(/[\r\n>]/g, " ")
-      .split(/\s+/)
-      .filter((b) => /^[0-9A-F]{2}$/i.test(b))
-      .map((b) => parseInt(b, 16));
+    const bytes = hexBytes(raw, "0902");
     const chars = bytes.filter((b) => b >= 0x30 && b <= 0x5a).map((b) => String.fromCharCode(b));
     const vin = chars.join("").slice(-17);
     return vin.length === 17 ? vin : null;
@@ -247,11 +265,7 @@ export class ObdConnection {
   /** Mode 02 — freeze frame value captured when the code was set. */
   async readFreezeFrame(pid: string): Promise<number[] | null> {
     const raw = await this.send(`02${pid}00`);
-    const bytes = raw
-      .replace(/[\r\n>]/g, " ")
-      .split(/\s+/)
-      .filter((b) => /^[0-9A-F]{2}$/i.test(b))
-      .map((b) => parseInt(b, 16));
+    const bytes = hexBytes(raw, `02${pid}00`);
     const start = bytes.findIndex((b, i) => b === 0x42 && bytes[i + 1] === parseInt(pid, 16));
     if (start === -1) return null;
     return bytes.slice(start + 3);
@@ -279,14 +293,35 @@ export class ObdConnection {
   }
 }
 
+/**
+ * Turn a raw ELM327 reply into data bytes.
+ * Handles: echoed command, spaces on/off, ISO-TP multi-line frames ("0:", "1:"),
+ * status words (SEARCHING..., NO DATA, ?) and CAN length prefixes.
+ */
+export function hexBytes(raw: string, echo?: string): number[] {
+  const out: number[] = [];
+  const lines = raw.split(/[\r\n]+/);
+  for (let line of lines) {
+    line = line.replace(/>/g, "").trim();
+    if (!line) continue;
+    if (/SEARCHING|NO DATA|UNABLE|STOPPED|ERROR|BUS|CAN|\?/i.test(line)) continue;
+    const compact = line.replace(/\s+/g, "").toUpperCase();
+    if (!/^[0-9A-F:]+$/.test(compact)) continue;
+    // multi-frame line index prefix ("0:41 00 ...")
+    const body = compact.includes(":") ? compact.slice(compact.indexOf(":") + 1) : compact;
+    if (echo && body === echo.toUpperCase()) continue;
+    if (body.length % 2 !== 0) continue;
+    for (let i = 0; i < body.length; i += 2) out.push(parseInt(body.slice(i, i + 2), 16));
+  }
+  return out;
+}
+
 export function parseDtcResponse(raw: string): string[] {
-  const bytes = raw
-    .replace(/[\r\n>]/g, " ")
-    .split(/\s+/)
-    .filter((b) => /^[0-9A-F]{2}$/i.test(b))
-    .map((b) => parseInt(b, 16));
+  const bytes = hexBytes(raw, "03");
   const start = bytes.indexOf(0x43);
-  const payload = start === -1 ? bytes : bytes.slice(start + 1);
+  let payload = start === -1 ? bytes : bytes.slice(start + 1);
+  // CAN replies put the DTC count right after 0x43 — drop it when present.
+  if (start !== -1 && payload.length % 2 === 1) payload = payload.slice(1);
   const codes: string[] = [];
   for (let i = 0; i + 1 < payload.length; i += 2) {
     const a = payload[i];
