@@ -130,6 +130,74 @@ export class ObdConnection {
     if (start === -1) return null;
     return bytes.slice(start + 2);
   }
+
+  /** Ask the ECU which Mode 01 PIDs it actually supports (python-OBD style discovery). */
+  async readSupportedPids(bases: readonly string[]): Promise<string[]> {
+    const { decodeSupportMask } = await import("./pids");
+    const found: string[] = [];
+    for (const base of bases) {
+      let data: number[] | null = null;
+      try {
+        data = await this.readPid(base);
+      } catch {
+        break;
+      }
+      if (!data || data.length < 4) break;
+      const list = decodeSupportMask(parseInt(base, 16), data);
+      found.push(...list);
+      // stop walking when the "next block supported" bit is clear
+      const nextBase = (parseInt(base, 16) + 0x20).toString(16).toUpperCase().padStart(2, "0");
+      if (!list.includes(nextBase)) break;
+    }
+    return Array.from(new Set(found));
+  }
+
+  /** Mode 09 PID 02 — vehicle identification number. */
+  async readVin(): Promise<string | null> {
+    const raw = await this.send("0902");
+    const bytes = raw
+      .replace(/[\r\n>]/g, " ")
+      .split(/\s+/)
+      .filter((b) => /^[0-9A-F]{2}$/i.test(b))
+      .map((b) => parseInt(b, 16));
+    const chars = bytes.filter((b) => b >= 0x30 && b <= 0x5a).map((b) => String.fromCharCode(b));
+    const vin = chars.join("").slice(-17);
+    return vin.length === 17 ? vin : null;
+  }
+
+  /** Mode 02 — freeze frame value captured when the code was set. */
+  async readFreezeFrame(pid: string): Promise<number[] | null> {
+    const raw = await this.send(`02${pid}00`);
+    const bytes = raw
+      .replace(/[\r\n>]/g, " ")
+      .split(/\s+/)
+      .filter((b) => /^[0-9A-F]{2}$/i.test(b))
+      .map((b) => parseInt(b, 16));
+    const start = bytes.findIndex((b, i) => b === 0x42 && bytes[i + 1] === parseInt(pid, 16));
+    if (start === -1) return null;
+    return bytes.slice(start + 3);
+  }
+
+  /** Probe a list of ECU addresses (DDT4All-style module discovery). */
+  async discoverEcus(addresses: Array<{ header: string; ar: string; en: string }>) {
+    const out: Array<{ header: string; ar: string; en: string; online: boolean; response: string }> = [];
+    for (const item of addresses) {
+      try {
+        await this.send(`ATSH${item.header}`, 3000);
+        const response = await this.send("0100", 3000);
+        const online = /41\s?00/i.test(response) || /^7E|^5|^6/i.test(response.trim());
+        out.push({ ...item, online, response: response.trim() });
+      } catch (error) {
+        out.push({ ...item, online: false, response: (error as Error).message });
+      }
+    }
+    try {
+      await this.send("ATSH7DF", 2000);
+    } catch {
+      /* ignore */
+    }
+    return out;
+  }
 }
 
 export function parseDtcResponse(raw: string): string[] {
