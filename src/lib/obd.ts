@@ -326,8 +326,9 @@ export function hexBytes(raw: string, echo?: string): number[] {
 }
 
 export function parseDtcResponse(raw: string): string[] {
-  const bytes = hexBytes(raw, "03");
-  const start = bytes.indexOf(0x43);
+  const bytes = hexBytes(raw);
+  // positive reply for mode 03 / 07 / 0A
+  const start = bytes.findIndex((b) => b === 0x43 || b === 0x47 || b === 0x4a);
   let payload = start === -1 ? bytes : bytes.slice(start + 1);
   // CAN replies put the DTC count right after 0x43 — drop it when present.
   if (start !== -1 && payload.length % 2 === 1) payload = payload.slice(1);
