@@ -300,6 +300,58 @@ export class ObdConnection {
     }
     return out;
   }
+
+  /** Deep-probe one module: supported PIDs, its own DTCs and VIN (if it answers). */
+  async probeEcu(header: string): Promise<{ pids: string[]; dtcs: string[]; vin: string | null; raw: string }> {
+    let pids: string[] = [];
+    let dtcs: string[] = [];
+    let vin: string | null = null;
+    let raw = "";
+    try {
+      await this.send(`ATSH${header}`, 3000);
+      try {
+        raw = await this.send("0100", 4000);
+      } catch {
+        /* ignore */
+      }
+      try {
+        pids = await this.readSupportedPids(["00", "20", "40", "60", "80", "A0", "C0"]);
+      } catch {
+        /* ignore */
+      }
+      try {
+        dtcs = parseDtcResponse(await this.send("03", 6000));
+      } catch {
+        /* ignore */
+      }
+      try {
+        vin = await this.readVin();
+      } catch {
+        /* ignore */
+      }
+    } finally {
+      try {
+        await this.send("ATSH7DF", 2000);
+      } catch {
+        /* ignore */
+      }
+    }
+    return { pids, dtcs, vin, raw: raw.trim() };
+  }
+
+  /** Read one PID from a specific module address. */
+  async readPidFrom(header: string, pid: string): Promise<number[] | null> {
+    try {
+      await this.send(`ATSH${header}`, 3000);
+      return await this.readPid(pid);
+    } finally {
+      try {
+        await this.send("ATSH7DF", 2000);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
 }
 
 /**
