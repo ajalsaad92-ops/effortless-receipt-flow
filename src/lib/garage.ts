@@ -46,9 +46,27 @@ function read<T>(key: string, fallback: T): T {
   }
 }
 
+/** Thrown when the browser refuses the write, so callers can surface it. */
+export class StorageFullError extends Error {
+  constructor() {
+    super("storage-full");
+    this.name = "StorageFullError";
+  }
+}
+
 function write<T>(key: string, value: T) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(key, JSON.stringify(value));
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    // A full quota used to fail silently: the UI showed the new vehicle, and
+    // the next reload showed it gone. Fail loudly instead.
+    const name = (error as { name?: string })?.name ?? "";
+    if (name === "QuotaExceededError" || name === "NS_ERROR_DOM_QUOTA_REACHED") {
+      throw new StorageFullError();
+    }
+    throw error;
+  }
   window.dispatchEvent(new CustomEvent("gmobd:storage", { detail: key }));
 }
 
@@ -70,8 +88,10 @@ function useLocalCollection<T>(key: string) {
 
   const save = useCallback(
     (next: T[]) => {
-      setItems(next);
+      // Persist first: if the browser rejects the write we must not leave the
+      // UI showing data that will be gone on the next reload.
       write(key, next);
+      setItems(next);
     },
     [key],
   );
@@ -80,7 +100,11 @@ function useLocalCollection<T>(key: string) {
 }
 
 export function newId() {
-  return Math.random().toString(36).slice(2, 10);
+  // Math.random() collides often enough to matter once a garage has history.
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
 export function useVehicles() {

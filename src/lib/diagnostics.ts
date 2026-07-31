@@ -24,8 +24,10 @@ const f = (
 const RULES: Rule[] = [
   // ── Idle behaviour ──────────────────────────────────────────
   (r) => {
-    if (r.speed > 3 || r.throttle > 8) return null;
-    if (r.rpm > 1250)
+    const { rpm, speed, throttle } = r;
+    if (rpm === null || speed === null || throttle === null) return null;
+    if (speed > 3 || throttle > 8) return null;
+    if (rpm > 1250)
       return f(
         "idle-high",
         "bad",
@@ -34,7 +36,7 @@ const RULES: Rule[] = [
         "المتوقع 600–950 لفة عند التباطؤ",
         "Expected 600–950 rpm at idle",
       );
-    if (r.rpm > 0 && r.rpm < 550)
+    if (rpm > 0 && rpm < 550)
       return f(
         "idle-low",
         "bad",
@@ -43,16 +45,18 @@ const RULES: Rule[] = [
         "المتوقع 600–950 لفة عند التباطؤ",
         "Expected 600–950 rpm at idle",
       );
-    if (r.rpm >= 550 && r.rpm <= 1250)
+    if (rpm >= 550 && rpm <= 1250)
       return f("idle-ok", "ok", "دوران التباطؤ ضمن المعدل الطبيعي.", "Idle RPM is within the normal range.", "600–950 لفة", "600–950 rpm");
     return null;
   },
 
   // ── Load vs RPM correlation ─────────────────────────────────
   (r) => {
-    if (r.rpm < 500) return null;
-    if (r.speed < 3 && r.throttle < 8) {
-      if (r.load > 45)
+    const { rpm, speed, throttle, load } = r;
+    if (rpm === null || speed === null || throttle === null || load === null) return null;
+    if (rpm < 500) return null;
+    if (speed < 3 && throttle < 8) {
+      if (load > 45)
         return f(
           "load-idle-high",
           "bad",
@@ -63,7 +67,7 @@ const RULES: Rule[] = [
         );
       return f("load-idle-ok", "ok", "حمل المحرك عند التباطؤ طبيعي.", "Engine load at idle is normal.", "15–35%", "15–35%");
     }
-    if (r.throttle > 45 && r.load < 40)
+    if (throttle > 45 && load < 40)
       return f(
         "load-low-wot",
         "bad",
@@ -77,8 +81,10 @@ const RULES: Rule[] = [
 
   // ── RPM ↔ speed (gearing / slipping) ────────────────────────
   (r) => {
-    if (r.speed < 15 || r.rpm < 800) return null;
-    const ratio = r.rpm / r.speed;
+    const { rpm, speed } = r;
+    if (rpm === null || speed === null) return null;
+    if (speed < 15 || rpm < 800) return null;
+    const ratio = rpm / speed;
     if (ratio > 90)
       return f(
         "gear-slip",
@@ -109,7 +115,9 @@ const RULES: Rule[] = [
 
   // ── Coolant temperature ─────────────────────────────────────
   (r) => {
-    if (r.coolant >= 110)
+    const { coolant, rpm } = r;
+    if (coolant === null) return null;
+    if (coolant >= 110)
       return f(
         "coolant-hot",
         "bad",
@@ -118,7 +126,7 @@ const RULES: Rule[] = [
         "المتوقع 85–105°م بعد التسخين",
         "Expected 85–105 °C once warm",
       );
-    if (r.coolant >= 105)
+    if (coolant >= 105)
       return f(
         "coolant-warm",
         "warn",
@@ -127,7 +135,7 @@ const RULES: Rule[] = [
         "المتوقع 85–105°م",
         "Expected 85–105 °C",
       );
-    if (r.coolant > 0 && r.coolant < 70 && r.rpm > 500)
+    if (coolant > 0 && coolant < 70 && rpm !== null && rpm > 500)
       return f(
         "coolant-cold",
         "warn",
@@ -136,14 +144,16 @@ const RULES: Rule[] = [
         "المتوقع 85–105°م بعد بضع دقائق",
         "Expected 85–105 °C after a few minutes",
       );
-    if (r.coolant >= 85)
+    if (coolant >= 85)
       return f("coolant-ok", "ok", "حرارة الماء ضمن المدى الطبيعي.", "Coolant temperature is in the normal range.", "85–105°م", "85–105 °C");
     return null;
   },
 
   // ── Intake air temperature ──────────────────────────────────
   (r) => {
-    if (r.intake >= 70)
+    const { intake } = r;
+    if (intake === null) return null;
+    if (intake >= 70)
       return f(
         "iat-high",
         "warn",
@@ -157,8 +167,12 @@ const RULES: Rule[] = [
 
   // ── Charging system ─────────────────────────────────────────
   (r) => {
-    if (r.rpm < 500) return null;
-    if (r.voltage < 13.0)
+    const { rpm, voltage } = r;
+    // voltage stays null until ATRV actually answers — never judge the
+    // charging system from a value the adapter never reported.
+    if (rpm === null || voltage === null) return null;
+    if (rpm < 500) return null;
+    if (voltage < 13.0)
       return f(
         "volt-low",
         "bad",
@@ -167,7 +181,7 @@ const RULES: Rule[] = [
         "المتوقع 13.5–14.7 فولت والمحرك يعمل",
         "Expected 13.5–14.7 V with the engine running",
       );
-    if (r.voltage > 15.0)
+    if (voltage > 15.0)
       return f(
         "volt-high",
         "bad",
@@ -181,7 +195,9 @@ const RULES: Rule[] = [
 
   // ── Throttle plausibility ───────────────────────────────────
   (r) => {
-    if (r.throttle > 20 && r.rpm < 900 && r.speed < 5)
+    const { throttle, rpm, speed } = r;
+    if (throttle === null || rpm === null || speed === null) return null;
+    if (throttle > 20 && rpm < 900 && speed < 5)
       return f(
         "tps-mismatch",
         "bad",

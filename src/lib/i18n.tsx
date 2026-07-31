@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { writeLangCookie, type Lang } from "./lang";
 
-export type Lang = "ar" | "en";
+export type { Lang };
 
 const dict = {
   appName: { ar: "جي إم أوبد", en: "GM OBD" },
@@ -219,6 +220,10 @@ const dict = {
   diagram_pick_part: { ar: "اختر نقطة على المخطط", en: "Pick a hotspot on the diagram" },
   diagram_for_code: { ar: "موقع القطعة على السيارة", en: "Part location on the vehicle" },
   open_diagram: { ar: "افتح المخطط", en: "Open diagram" },
+  storage_full: {
+    ar: "مساحة التخزين في المتصفح ممتلئة. احذف بعض الفحوصات القديمة ثم أعد المحاولة.",
+    en: "Browser storage is full. Delete some old scans and try again.",
+  },
 } as const;
 
 export type TKey = keyof typeof dict;
@@ -233,13 +238,10 @@ type Ctx = {
 
 const I18nContext = createContext<Ctx | null>(null);
 
-export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("ar");
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem("gmobd.lang") as Lang | null;
-    if (stored === "ar" || stored === "en") setLangState(stored);
-  }, []);
+export function I18nProvider({ children, initialLang }: { children: React.ReactNode; initialLang: Lang }) {
+  // Seeded from the cookie the server already read, so the first paint is
+  // already in the right language and direction — no flash, no mismatch.
+  const [lang, setLangState] = useState<Lang>(initialLang);
 
   useEffect(() => {
     const el = document.documentElement;
@@ -249,7 +251,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
-    window.localStorage.setItem("gmobd.lang", l);
+    writeLangCookie(l);
   }, []);
 
   const value = useMemo<Ctx>(

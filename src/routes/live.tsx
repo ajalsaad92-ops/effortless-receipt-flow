@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AppShell, PageHeader } from "@/components/AppShell";
 import { useI18n } from "@/lib/i18n";
 import { useObd } from "@/lib/obd-context";
-import { LIVE_PIDS, decodePid, demoReading, type LiveReading } from "@/lib/obd";
+import { EMPTY_READING, LIVE_PIDS, decodePid, demoReading, type LiveReading } from "@/lib/obd";
 import { analyzeTrend } from "@/lib/diagnostics";
 
 export const Route = createFileRoute("/live")({
@@ -50,8 +50,10 @@ function LivePage() {
     let timer = 0;
     // one live object mutated in place: gauges update value-by-value instead of
     // waiting for a whole (slow) round-trip of every PID, which is what made the
-    // screen jump between "—" and a number.
-    const current: LiveReading = { rpm: 0, speed: 0, coolant: 0, load: 0, intake: 0, throttle: 0, voltage: 14 };
+    // screen jump between "—" and a number. Fields start as null ("not read"),
+    // never as a plausible-looking default — a made-up number would flow into
+    // the diagnostics rules and produce a verdict about a sensor nobody read.
+    const current: LiveReading = { ...EMPTY_READING };
 
     const loop = async () => {
       while (!cancelled) {
@@ -109,8 +111,11 @@ function LivePage() {
       toast.error(t("live_hint"));
       return;
     }
+    // Unread sensors are exported as empty cells, not as 0 — a spreadsheet
+    // full of fake zeroes is worse than an obvious gap.
+    const cell = (v: number | null) => (v === null ? "" : String(v));
     const header = ["timestamp", ...GAUGES.map((g) => g.key), "voltage"].join(",");
-    const rows = samples.map((s) => [s.at, ...GAUGES.map((g) => s[g.key]), s.voltage].join(","));
+    const rows = samples.map((s) => [s.at, ...GAUGES.map((g) => cell(s[g.key])), cell(s.voltage)].join(","));
     const blob = new Blob([[header, ...rows].join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -147,16 +152,23 @@ function LivePage() {
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {GAUGES.map((gauge) => {
-          const value = reading ? Number(reading[gauge.key]) : 0;
-          const pct = Math.min(100, Math.max(0, (value / gauge.max) * 100));
+          const value = reading ? reading[gauge.key] : null;
+          const pct = value === null ? 0 : Math.min(100, Math.max(0, (value / gauge.max) * 100));
           return (
             <div key={gauge.key} className="rounded-3xl border border-border bg-card p-5">
               <p className="text-xs text-muted-foreground">{lang === "ar" ? gauge.ar : gauge.en}</p>
               <p className="mt-1 flex items-baseline gap-1.5">
-                <span className="text-3xl font-semibold tabular-nums">{reading ? value : "—"}</span>
+                <span className="text-3xl font-semibold tabular-nums">{value === null ? "—" : value}</span>
                 <span className="text-xs text-muted-foreground">{gauge.unit}</span>
               </p>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary">
+              <div
+                className="mt-3 h-2 overflow-hidden rounded-full bg-secondary"
+                role="progressbar"
+                aria-valuenow={value ?? undefined}
+                aria-valuemin={0}
+                aria-valuemax={gauge.max}
+                aria-label={lang === "ar" ? gauge.ar : gauge.en}
+              >
                 <div className="h-full rounded-full bg-primary transition-[width] duration-300 ease-out" style={{ width: `${pct}%` }} />
               </div>
             </div>

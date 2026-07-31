@@ -9,58 +9,23 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SensorsRouteImport } from './routes/sensors'
-import { Route as ScanRouteImport } from './routes/scan'
-import { Route as ReportRouteImport } from './routes/report'
-import { Route as LiveRouteImport } from './routes/live'
-import { Route as GarageRouteImport } from './routes/garage'
-import { Route as DiagramsRouteImport } from './routes/diagrams'
-import { Route as ControlsRouteImport } from './routes/controls'
-import { Route as CodesRouteImport } from './routes/codes'
-import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AssistantRouteImport } from './routes/assistant'
+import { Route as CodesRouteImport } from './routes/codes'
+import { Route as ControlsRouteImport } from './routes/controls'
+import { Route as DiagramsRouteImport } from './routes/diagrams'
+import { Route as GarageRouteImport } from './routes/garage'
+import { Route as LiveRouteImport } from './routes/live'
+import { Route as ReportRouteImport } from './routes/report'
+import { Route as ScanRouteImport } from './routes/scan'
+import { Route as SensorsRouteImport } from './routes/sensors'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as CodesIndexRouteImport } from './routes/codes.index'
 import { Route as CodesCodeRouteImport } from './routes/codes.$code'
-import { Route as ApiChatRouteImport } from './routes/api/chat'
 
-const SensorsRoute = SensorsRouteImport.update({
-  id: '/sensors',
-  path: '/sensors',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ScanRoute = ScanRouteImport.update({
-  id: '/scan',
-  path: '/scan',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReportRoute = ReportRouteImport.update({
-  id: '/report',
-  path: '/report',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LiveRoute = LiveRouteImport.update({
-  id: '/live',
-  path: '/live',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GarageRoute = GarageRouteImport.update({
-  id: '/garage',
-  path: '/garage',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DiagramsRoute = DiagramsRouteImport.update({
-  id: '/diagrams',
-  path: '/diagrams',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ControlsRoute = ControlsRouteImport.update({
-  id: '/controls',
-  path: '/controls',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CodesRoute = CodesRouteImport.update({
-  id: '/codes',
-  path: '/codes',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssistantRoute = AssistantRouteImport.update({
@@ -68,9 +33,49 @@ const AssistantRoute = AssistantRouteImport.update({
   path: '/assistant',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const CodesRoute = CodesRouteImport.update({
+  id: '/codes',
+  path: '/codes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ControlsRoute = ControlsRouteImport.update({
+  id: '/controls',
+  path: '/controls',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiagramsRoute = DiagramsRouteImport.update({
+  id: '/diagrams',
+  path: '/diagrams',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GarageRoute = GarageRouteImport.update({
+  id: '/garage',
+  path: '/garage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveRoute = LiveRouteImport.update({
+  id: '/live',
+  path: '/live',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanRoute = ScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SensorsRoute = SensorsRouteImport.update({
+  id: '/sensors',
+  path: '/sensors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CodesIndexRoute = CodesIndexRouteImport.update({
@@ -82,11 +87,6 @@ const CodesCodeRoute = CodesCodeRouteImport.update({
   id: '/$code',
   path: '/$code',
   getParentRoute: () => CodesRoute,
-} as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
-  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -197,60 +197,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sensors': {
-      id: '/sensors'
-      path: '/sensors'
-      fullPath: '/sensors'
-      preLoaderRoute: typeof SensorsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/scan': {
-      id: '/scan'
-      path: '/scan'
-      fullPath: '/scan'
-      preLoaderRoute: typeof ScanRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/report': {
-      id: '/report'
-      path: '/report'
-      fullPath: '/report'
-      preLoaderRoute: typeof ReportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/live': {
-      id: '/live'
-      path: '/live'
-      fullPath: '/live'
-      preLoaderRoute: typeof LiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/garage': {
-      id: '/garage'
-      path: '/garage'
-      fullPath: '/garage'
-      preLoaderRoute: typeof GarageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/diagrams': {
-      id: '/diagrams'
-      path: '/diagrams'
-      fullPath: '/diagrams'
-      preLoaderRoute: typeof DiagramsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/controls': {
-      id: '/controls'
-      path: '/controls'
-      fullPath: '/controls'
-      preLoaderRoute: typeof ControlsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/codes': {
-      id: '/codes'
-      path: '/codes'
-      fullPath: '/codes'
-      preLoaderRoute: typeof CodesRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assistant': {
@@ -260,11 +211,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AssistantRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/codes': {
+      id: '/codes'
+      path: '/codes'
+      fullPath: '/codes'
+      preLoaderRoute: typeof CodesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/controls': {
+      id: '/controls'
+      path: '/controls'
+      fullPath: '/controls'
+      preLoaderRoute: typeof ControlsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagrams': {
+      id: '/diagrams'
+      path: '/diagrams'
+      fullPath: '/diagrams'
+      preLoaderRoute: typeof DiagramsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/garage': {
+      id: '/garage'
+      path: '/garage'
+      fullPath: '/garage'
+      preLoaderRoute: typeof GarageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live': {
+      id: '/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof LiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan': {
+      id: '/scan'
+      path: '/scan'
+      fullPath: '/scan'
+      preLoaderRoute: typeof ScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sensors': {
+      id: '/sensors'
+      path: '/sensors'
+      fullPath: '/sensors'
+      preLoaderRoute: typeof SensorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/codes/': {
@@ -280,13 +287,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/codes/$code'
       preLoaderRoute: typeof CodesCodeRouteImport
       parentRoute: typeof CodesRoute
-    }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
-      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -319,3 +319,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

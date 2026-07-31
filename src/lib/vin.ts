@@ -21,13 +21,23 @@ export type VinInfo = {
 
 const YEAR_CODES = "ABCDEFGHJKLMNPRSTVWXY123456789";
 
-/** Position 10 -> model year. 2010-2039 window (A=2010 ... 9=2039). */
-export function decodeVinYear(char: string): number | null {
+/**
+ * Position 10 -> model year. The code repeats every 30 years, so the letter is
+ * ambiguous on its own. Position 7 disambiguates on a real 17-character VIN
+ * (numeric = 1980-2009, alphabetic = 2010+); without it we take the most recent
+ * year that is not in the future. The old version only ever considered
+ * 2010-2039, so every pre-2010 car came back with a year 30 years too late.
+ */
+export function decodeVinYear(char: string, positionSeven?: string): number | null {
   const index = YEAR_CODES.indexOf(char.toUpperCase());
   if (index === -1) return null;
-  const year = 2010 + index;
-  const nextYear = new Date().getFullYear() + 1;
-  return year > nextYear ? year - 30 : year;
+  const cutoff = new Date().getFullYear() + 1;
+  const older = 1980 + index;
+  const newer = 2010 + index;
+
+  if (positionSeven && /^[0-9]$/.test(positionSeven)) return older;
+  if (positionSeven && /^[A-Z]$/i.test(positionSeven)) return newer <= cutoff ? newer : older;
+  return newer <= cutoff ? newer : older;
 }
 
 type Wmi = { make: string; brandKey: VinInfo["brandKey"]; division?: string; country?: string; body?: string };
@@ -121,7 +131,7 @@ export function decodeVin(rawVin: string): VinInfo {
     division: wmi?.division ?? null,
     country: wmi?.country ?? null,
     bodyClass: wmi?.body ?? null,
-    year: valid ? decodeVinYear(vin[9]) : null,
+    year: valid ? decodeVinYear(vin[9], vin[6]) : null,
     plant: valid ? vin[10] : null,
     serial: valid ? vin.slice(11) : null,
     engine: engineChar ? (ENGINE_CODES[brandKey]?.[engineChar] ?? null) : null,

@@ -108,6 +108,7 @@ function ReportPage() {
             </button>
             <Link
               to="/assistant"
+              search={{ q: undefined }}
               className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm hover:bg-secondary"
             >
               <Bot className="size-4" />
