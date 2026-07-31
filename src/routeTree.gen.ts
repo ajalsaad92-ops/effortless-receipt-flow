@@ -9,13 +9,31 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as CodesRouteImport } from './routes/codes'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CodesIndexRouteImport } from './routes/codes.index'
+import { Route as CodesCodeRouteImport } from './routes/codes.$code'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 
+const CodesRoute = CodesRouteImport.update({
+  id: '/codes',
+  path: '/codes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CodesIndexRoute = CodesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CodesRoute,
+} as any)
+const CodesCodeRoute = CodesCodeRouteImport.update({
+  id: '/$code',
+  path: '/$code',
+  getParentRoute: () => CodesRoute,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
@@ -25,38 +43,68 @@ const ApiChatRoute = ApiChatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/codes': typeof CodesRouteWithChildren
   '/api/chat': typeof ApiChatRoute
+  '/codes/$code': typeof CodesCodeRoute
+  '/codes/': typeof CodesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/chat': typeof ApiChatRoute
+  '/codes/$code': typeof CodesCodeRoute
+  '/codes': typeof CodesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/codes': typeof CodesRouteWithChildren
   '/api/chat': typeof ApiChatRoute
+  '/codes/$code': typeof CodesCodeRoute
+  '/codes/': typeof CodesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/chat'
+  fullPaths: '/' | '/codes' | '/api/chat' | '/codes/$code' | '/codes/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/chat'
-  id: '__root__' | '/' | '/api/chat'
+  to: '/' | '/api/chat' | '/codes/$code' | '/codes'
+  id: '__root__' | '/' | '/codes' | '/api/chat' | '/codes/$code' | '/codes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CodesRoute: typeof CodesRouteWithChildren
   ApiChatRoute: typeof ApiChatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/codes': {
+      id: '/codes'
+      path: '/codes'
+      fullPath: '/codes'
+      preLoaderRoute: typeof CodesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/codes/': {
+      id: '/codes/'
+      path: '/'
+      fullPath: '/codes/'
+      preLoaderRoute: typeof CodesIndexRouteImport
+      parentRoute: typeof CodesRoute
+    }
+    '/codes/$code': {
+      id: '/codes/$code'
+      path: '/$code'
+      fullPath: '/codes/$code'
+      preLoaderRoute: typeof CodesCodeRouteImport
+      parentRoute: typeof CodesRoute
     }
     '/api/chat': {
       id: '/api/chat'
@@ -68,8 +116,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface CodesRouteChildren {
+  CodesCodeRoute: typeof CodesCodeRoute
+  CodesIndexRoute: typeof CodesIndexRoute
+}
+
+const CodesRouteChildren: CodesRouteChildren = {
+  CodesCodeRoute: CodesCodeRoute,
+  CodesIndexRoute: CodesIndexRoute,
+}
+
+const CodesRouteWithChildren = CodesRoute._addFileChildren(CodesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CodesRoute: CodesRouteWithChildren,
   ApiChatRoute: ApiChatRoute,
 }
 export const routeTree = rootRouteImport
