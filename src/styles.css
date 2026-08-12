@@ -112,7 +112,7 @@
     /* A technical-drawing grid plus a vignette, so the centre reads brighter
        than the edges — the way a lit instrument cluster actually looks. */
     background-image:
-      radial-gradient(120% 80% at 50% 0%, oklch(0.26 0.03 258 / 55%) 0%, transparent 60%),
+      radial-gradient(120% 80% at 50% 0%, oklch(0.7 0.2 150 / 15%) 0%, transparent 60%),
       linear-gradient(to right, oklch(1 0 0 / 3.5%) 1px, transparent 1px),
       linear-gradient(to bottom, oklch(1 0 0 / 3.5%) 1px, transparent 1px);
     background-size: 100% 100%, 56px 56px, 56px 56px;
