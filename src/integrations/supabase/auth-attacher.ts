@@ -1,4 +1,5 @@
-export const attachSupabaseAuth = (ctx: any) => {
-  // Placeholder to resolve build errors
-  return ctx;
-};
+import { createMiddleware } from "@tanstack/react-start";
+
+export const attachSupabaseAuth = createMiddleware().client(async ({ next }) => {
+  return next();
+});
