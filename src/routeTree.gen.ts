@@ -9,202 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AssistantRouteImport } from './routes/assistant'
-import { Route as DiagnoseRouteImport } from './routes/diagnose'
-import { Route as GarageRouteImport } from './routes/garage'
-import { Route as LibraryRouteImport } from './routes/library'
-import { Route as LiveRouteImport } from './routes/live'
-import { Route as ApiChatRouteImport } from './routes/api/chat'
-import { Route as CodesCodeRouteImport } from './routes/codes.$code'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AssistantRoute = AssistantRouteImport.update({
-  id: '/assistant',
-  path: '/assistant',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DiagnoseRoute = DiagnoseRouteImport.update({
-  id: '/diagnose',
-  path: '/diagnose',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GarageRoute = GarageRouteImport.update({
-  id: '/garage',
-  path: '/garage',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LibraryRoute = LibraryRouteImport.update({
-  id: '/library',
-  path: '/library',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LiveRoute = LiveRouteImport.update({
-  id: '/live',
-  path: '/live',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CodesCodeRoute = CodesCodeRouteImport.update({
-  id: '/codes/$code',
-  path: '/codes/$code',
-  getParentRoute: () => rootRouteImport,
-} as any)
-
-export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/assistant': typeof AssistantRoute
-  '/diagnose': typeof DiagnoseRoute
-  '/garage': typeof GarageRoute
-  '/library': typeof LibraryRoute
-  '/live': typeof LiveRoute
-  '/api/chat': typeof ApiChatRoute
-  '/codes/$code': typeof CodesCodeRoute
-}
-export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/assistant': typeof AssistantRoute
-  '/diagnose': typeof DiagnoseRoute
-  '/garage': typeof GarageRoute
-  '/library': typeof LibraryRoute
-  '/live': typeof LiveRoute
-  '/api/chat': typeof ApiChatRoute
-  '/codes/$code': typeof CodesCodeRoute
-}
+export interface FileRoutesByFullPath {}
+export interface FileRoutesByTo {}
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/assistant': typeof AssistantRoute
-  '/diagnose': typeof DiagnoseRoute
-  '/garage': typeof GarageRoute
-  '/library': typeof LibraryRoute
-  '/live': typeof LiveRoute
-  '/api/chat': typeof ApiChatRoute
-  '/codes/$code': typeof CodesCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/assistant'
-    | '/diagnose'
-    | '/garage'
-    | '/library'
-    | '/live'
-    | '/api/chat'
-    | '/codes/$code'
+  fullPaths: never
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/assistant'
-    | '/diagnose'
-    | '/garage'
-    | '/library'
-    | '/live'
-    | '/api/chat'
-    | '/codes/$code'
-  id:
-    | '__root__'
-    | '/'
-    | '/assistant'
-    | '/diagnose'
-    | '/garage'
-    | '/library'
-    | '/live'
-    | '/api/chat'
-    | '/codes/$code'
+  to: never
+  id: '__root__'
   fileRoutesById: FileRoutesById
 }
-export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AssistantRoute: typeof AssistantRoute
-  DiagnoseRoute: typeof DiagnoseRoute
-  GarageRoute: typeof GarageRoute
-  LibraryRoute: typeof LibraryRoute
-  LiveRoute: typeof LiveRoute
-  ApiChatRoute: typeof ApiChatRoute
-  CodesCodeRoute: typeof CodesCodeRoute
-}
+export interface RootRouteChildren {}
 
 declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/assistant': {
-      id: '/assistant'
-      path: '/assistant'
-      fullPath: '/assistant'
-      preLoaderRoute: typeof AssistantRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/diagnose': {
-      id: '/diagnose'
-      path: '/diagnose'
-      fullPath: '/diagnose'
-      preLoaderRoute: typeof DiagnoseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/garage': {
-      id: '/garage'
-      path: '/garage'
-      fullPath: '/garage'
-      preLoaderRoute: typeof GarageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/library': {
-      id: '/library'
-      path: '/library'
-      fullPath: '/library'
-      preLoaderRoute: typeof LibraryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/live': {
-      id: '/live'
-      path: '/live'
-      fullPath: '/live'
-      preLoaderRoute: typeof LiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/codes/$code': {
-      id: '/codes/$code'
-      path: '/codes/$code'
-      fullPath: '/codes/$code'
-      preLoaderRoute: typeof CodesCodeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-  }
+  interface FileRoutesByPath {}
 }
 
-const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AssistantRoute: AssistantRoute,
-  DiagnoseRoute: DiagnoseRoute,
-  GarageRoute: GarageRoute,
-  LibraryRoute: LibraryRoute,
-  LiveRoute: LiveRoute,
-  ApiChatRoute: ApiChatRoute,
-  CodesCodeRoute: CodesCodeRoute,
-}
+const rootRouteChildren: RootRouteChildren = {}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
